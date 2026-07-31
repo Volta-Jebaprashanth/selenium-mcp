@@ -17,6 +17,26 @@ public class Navigator {
         driver.get(url);
     }
 
+    public void back() {
+        driver.navigate().back();
+    }
+
+    public void forward() {
+        driver.navigate().forward();
+    }
+
+    public void refresh() {
+        driver.navigate().refresh();
+    }
+
+    public String getCurrentUrl() {
+        return driver.getCurrentUrl();
+    }
+
+    public String getTitle() {
+        return driver.getTitle();
+    }
+
     public String getPageSource() {
         return driver.getPageSource();
     }

@@ -32,9 +32,17 @@ public class BrowserSession {
      * Opens a browser if one is not already open. If a browser is already open, it is reused.
      */
     public WebDriver open(String browser) {
+        return open(browser, BrowserOptions.DEFAULT);
+    }
+
+    /**
+     * Opens a browser with the given launch options if one is not already open.
+     * If a browser is already open, it is reused and the options are ignored.
+     */
+    public WebDriver open(String browser, BrowserOptions options) {
         if (driver == null) {
             browserName = browserFactory.resolveName(browser);
-            driver = browserFactory.create(browser);
+            driver = browserFactory.create(browser, options);
         }
         return driver;
     }
