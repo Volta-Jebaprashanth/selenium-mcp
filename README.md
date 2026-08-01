@@ -1,19 +1,35 @@
 # selenium-mcp
 
+### The only Java-based Selenium MCP server with Playwright-MCP-style smart element discovery
+
 [![CI](https://github.com/JebaprashanthBlt/selenium-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/JebaprashanthBlt/selenium-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 [![Java 21+](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-An [MCP](https://modelcontextprotocol.io) server that exposes Selenium browser automation as tools for AI agents. Built with Spring Boot and Spring AI's MCP server starter, it talks to clients over stdio.
+A [Model Context Protocol](https://modelcontextprotocol.io) server, built in Java with Spring Boot and Spring AI's MCP server starter, that lets AI agents (Claude Desktop, Claude Code, Cursor, etc.) drive a real Chrome, Firefox, or Edge browser through Selenium WebDriver — and, unlike every other Selenium MCP server, gives them a *structured* way to find elements instead of forcing them to parse raw HTML.
+
+## The problem this solves
+
+Every browser-automation agent runs into the same wall: dump the entire raw HTML page source into the model's context just to find one element, guess at a locator from what you can see, and hit `element not unique, multiple matches found`. It's slow, it burns context, and it's flaky.
+
+[Playwright MCP](https://github.com/microsoft/playwright-mcp) solved this on the Node/Playwright side with structured accessibility-tree snapshots instead of raw DOM dumps. **`selenium-mcp` brings that same capability to the Java/Selenium ecosystem — as far as we're aware, it's the only Selenium-based MCP server that does.**
+
+`PageSourceTools` gives an agent focused, JSON-shaped views of the page instead of raw markup — scripts only, styles only, a compact element tree — and, most powerfully, `getPageElementsFiltered`: it finds *every* element matching a locator in one call and hands back the exact ancestor chain and sibling position (`div.container > form#login > input:nth-of-type(2)`) needed to write a locator that's unique on the first try, no more trial-and-error against the live page. See [Page inspection](#page-inspection-pagesourcetools--the-flagship-feature) below.
+
+| | selenium-mcp | Other Selenium MCP servers | Playwright MCP |
+|---|---|---|---|
+| Language / stack | Java (Spring Boot) | mostly Java / Python wrappers | Node.js |
+| Browser engine | Selenium WebDriver (Chrome, Firefox, Edge) | Selenium WebDriver | Playwright (Chromium, Firefox, WebKit) |
+| Structured element discovery (no raw HTML dump) | ✅ filtered queries with ancestor/sibling context | ❌ raw `getPageSource` only | ✅ accessibility-tree snapshot |
+| CDP network capture, mocking, blocking, console logs | ✅ | rare | ✅ |
+| Standalone REST/API testing tools | ✅ | ❌ | ❌ |
 
 ## What it does
 
-An MCP client (Claude Desktop, Claude Code, Cursor, etc.) can drive a real Chrome, Firefox, or Edge browser through this server: open a browser, navigate to a URL, read the page source, click elements, and type into fields — all via standard Selenium locators.
+Beyond element discovery, it's a full Selenium automation surface: open a browser, navigate, read the page source, click elements, type into fields — all via standard Selenium locators (`id`, `name`, `css`, `xpath`, `className`, `linkText`, `partialLinkText`, `tagName`).
 
-Beyond classic browser automation, it also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — passive network capture, request mocking/blocking, simulated network conditions, and browser console log capture — plus a standalone REST client for API automation, so an agent can combine UI-driven and API-driven testing in one workflow. See [Network capture, mocking & console logs](#network-capture-mocking--console-logs-networktools--chromeedge-only) and [REST API automation](#rest-api-automation-apitools) below.
-
-It also solves a problem every browser-automation agent runs into: reading the entire raw HTML page source just to find one element, then guessing at a locator and hitting "element not unique, multiple matches found." `PageSourceTools` gives an agent focused, JSON-shaped views of the page instead — scripts only, styles only, a compact element tree — and, most usefully, `getPageElementsFiltered`, which finds *every* element matching a locator in one call and hands back the exact ancestor/sibling context (with sibling positions) needed to write a locator that's actually unique on the first try. See [Page inspection](#page-inspection-pagesourcetools) below.
+It also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — passive network capture, request mocking/blocking, simulated network conditions, and browser console log capture — plus a standalone REST client for API automation, so an agent can combine UI-driven and API-driven testing in one workflow. See [Network capture, mocking & console logs](#network-capture-mocking--console-logs-networktools--chromeedge-only) and [REST API automation](#rest-api-automation-apitools) below.
 
 ## Prerequisites
 
@@ -68,9 +84,9 @@ Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpat
 | `click` | Clicks an element, located by strategy and value. |
 | `sendKeys` | Types text into an element, with an option to clear existing content first. |
 
-### Page inspection (`PageSourceTools`)
+### Page inspection (`PageSourceTools`) — the flagship feature
 
-Token-efficient, JSON-shaped alternatives to the raw HTML from `getPageSource` — read only what you actually need instead of parsing the whole page, and never guess at a locator again.
+Token-efficient, JSON-shaped alternatives to the raw HTML from `getPageSource` — read only what you actually need instead of parsing the whole page, and never guess at a locator again. This is the capability described in [The problem this solves](#the-problem-this-solves) above, and what sets `selenium-mcp` apart from other Selenium MCP servers.
 
 | Tool | Description |
 |---|---|
