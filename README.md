@@ -1,5 +1,10 @@
 # selenium-mcp
 
+[![CI](https://github.com/JebaprashanthBlt/selenium-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/JebaprashanthBlt/selenium-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![Java 21+](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
 An [MCP](https://modelcontextprotocol.io) server that exposes Selenium browser automation as tools for AI agents. Built with Spring Boot and Spring AI's MCP server starter, it talks to clients over stdio.
 
 ## What it does
@@ -269,3 +274,19 @@ Logs go to `mcp-server.log` (rotated), not the console — console output is res
 ## For AI coding agents
 
 See [AGENTS.md](AGENTS.md) for conventions and guidance when generating or modifying code in this repo.
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup, architecture layering rules, and PR process. Please also read [AGENTS.md](AGENTS.md), which is the source of truth for how this codebase is organized. This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Security
+
+To report a security vulnerability, please follow the process in [SECURITY.md](SECURITY.md) rather than opening a public issue.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
+## License
+
+[MIT](LICENSE.md)
