@@ -165,12 +165,16 @@ public class Tools {
         return requirePageSourceInspector().getElements(maxDepth);
     }
 
-    public String getPageElements(By locator, int maxDepth) {
-        return requirePageSourceInspector().getElements(locator, maxDepth);
+    public String getPageElementsFiltered(By locator, boolean includeAncestors, boolean includeDescendants,
+                                           boolean includeSiblings, int maxDepth, int limit) {
+        return requirePageSourceInspector().getFilteredElements(
+                locator, includeAncestors, includeDescendants, includeSiblings, maxDepth, limit);
     }
 
-    public String getPageElements(String locatorType, String locatorValue, int maxDepth) {
-        return requirePageSourceInspector().getElements(locatorType, locatorValue, maxDepth);
+    public String getPageElementsFiltered(String locatorType, String locatorValue, boolean includeAncestors,
+                                           boolean includeDescendants, boolean includeSiblings, int maxDepth, int limit) {
+        return requirePageSourceInspector().getFilteredElements(
+                locatorType, locatorValue, includeAncestors, includeDescendants, includeSiblings, maxDepth, limit);
     }
 
     // -- Element interaction --
