@@ -21,8 +21,9 @@ import java.util.Set;
  * ({@link Navigator}, {@link ElementInteractor}, {@link ElementInspector}, {@link WaitHelper},
  * {@link AlertHandler}, {@link FrameHandler}, {@link WindowManager}, {@link CookieManager},
  * {@link ScreenshotTaker}, {@link ScriptRunner}, {@link ActionsHelper}, {@link SelectHelper},
- * {@link FileHelper}, {@link NetworkMonitor}, {@link ConsoleLogMonitor}) act on the driver for
- * the current session. Any of these can be swapped independently without touching the others.
+ * {@link FileHelper}, {@link NetworkMonitor}, {@link ConsoleLogMonitor}, {@link PageSourceInspector})
+ * act on the driver for the current session. Any of these can be swapped independently without
+ * touching the others.
  * <p>
  * {@link NetworkMonitor} and {@link ConsoleLogMonitor} are CDP-backed and only function against
  * Chrome/Edge; their methods throw {@link UnsupportedOperationException} on other browsers.
@@ -47,6 +48,7 @@ public class Tools {
     private FileHelper fileHelper;
     private NetworkMonitor networkMonitor;
     private ConsoleLogMonitor consoleLogMonitor;
+    private PageSourceInspector pageSourceInspector;
 
     public Tools() {
         this(new BrowserFactory());
@@ -118,6 +120,7 @@ public class Tools {
         fileHelper = null;
         networkMonitor = null;
         consoleLogMonitor = null;
+        pageSourceInspector = null;
     }
 
     // -- Navigation --
@@ -148,6 +151,26 @@ public class Tools {
 
     public String getPageSource() {
         return requireNavigator().getPageSource();
+    }
+
+    public String getPageScripts() {
+        return requirePageSourceInspector().getScripts();
+    }
+
+    public String getPageStyles() {
+        return requirePageSourceInspector().getStyles();
+    }
+
+    public String getPageElements(int maxDepth) {
+        return requirePageSourceInspector().getElements(maxDepth);
+    }
+
+    public String getPageElements(By locator, int maxDepth) {
+        return requirePageSourceInspector().getElements(locator, maxDepth);
+    }
+
+    public String getPageElements(String locatorType, String locatorValue, int maxDepth) {
+        return requirePageSourceInspector().getElements(locatorType, locatorValue, maxDepth);
     }
 
     // -- Element interaction --
@@ -756,6 +779,7 @@ public class Tools {
         this.fileHelper = new FileHelper(driver, locators);
         this.networkMonitor = new NetworkMonitor(driver);
         this.consoleLogMonitor = new ConsoleLogMonitor(driver);
+        this.pageSourceInspector = new PageSourceInspector(driver, locators);
     }
 
     private Navigator requireNavigator() {
@@ -831,5 +855,10 @@ public class Tools {
     private ConsoleLogMonitor requireConsoleLogMonitor() {
         session.requireDriver();
         return consoleLogMonitor;
+    }
+
+    private PageSourceInspector requirePageSourceInspector() {
+        session.requireDriver();
+        return pageSourceInspector;
     }
 }
