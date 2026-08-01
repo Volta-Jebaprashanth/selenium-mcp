@@ -13,6 +13,8 @@ An MCP client (Claude Desktop, Claude Code, Cursor, etc.) can drive a real Chrom
 
 Beyond classic browser automation, it also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — passive network capture, request mocking/blocking, simulated network conditions, and browser console log capture — plus a standalone REST client for API automation, so an agent can combine UI-driven and API-driven testing in one workflow. See [Network capture, mocking & console logs](#network-capture-mocking--console-logs-networktools--chromeedge-only) and [REST API automation](#rest-api-automation-apitools) below.
 
+It also solves a problem every browser-automation agent runs into: reading the entire raw HTML page source just to find one element, then guessing at a locator and hitting "element not unique, multiple matches found." `PageSourceTools` gives an agent focused, JSON-shaped views of the page instead — scripts only, styles only, a compact element tree — and, most usefully, `getPageElementsFiltered`, which finds *every* element matching a locator in one call and hands back the exact ancestor/sibling context (with sibling positions) needed to write a locator that's actually unique on the first try. See [Page inspection](#page-inspection-pagesourcetools) below.
+
 ## Prerequisites
 
 - Java 21+ (`JAVA_HOME` pointing at a JDK 21 install)
@@ -65,6 +67,19 @@ Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpat
 | `getPageSource` | Returns the full HTML of the current page. |
 | `click` | Clicks an element, located by strategy and value. |
 | `sendKeys` | Types text into an element, with an option to clear existing content first. |
+
+### Page inspection (`PageSourceTools`)
+
+Token-efficient, JSON-shaped alternatives to the raw HTML from `getPageSource` — read only what you actually need instead of parsing the whole page, and never guess at a locator again.
+
+| Tool | Description |
+|---|---|
+| `getPageScripts` | Every `<script>` on the page as a JSON array — `src` for external scripts, `content` for inline ones (truncated over 10,000 characters). No markup, no styles, no noise. |
+| `getPageStyles` | Every stylesheet as a JSON array — `href` for external `<link rel="stylesheet">`s, `content` for inline `<style>` tags (same truncation). |
+| `getPageElements` | The entire page as a compact JSON tree rooted at `<body>` — tag, notable attributes, each element's own text, and children — with `<script>`/`<style>`/comments stripped out entirely. Far cheaper for an agent to read than raw HTML. Depth-capped via `maxDepth` (default 20). |
+| `getPageElementsFiltered` | **The one to reach for once you know what you're looking for.** Finds *every* element matching a locator (not just the first) and returns each as JSON, with three optional context toggles: `includeAncestors` — the parent chain up to `<html>`, with `siblingIndex`/`siblingCount` on every node so you can build a locator that's actually unique (e.g. `div.container > form#login > input:nth-of-type(2)`) instead of hitting "multiple elements found"; `includeSiblings` — the other children of the same parent, e.g. a `<label>` right next to an `<input>`; `includeDescendants` — expand a match's own children, for when the locator targets a container rather than a leaf. Results are capped (`limit`, default 50) and the response always reports `totalMatches`/`returnedMatches`/`truncated`. |
+
+Example: `locatorType=xpath`, `locatorValue=//input`, `includeAncestors=true` returns one entry per `<input>` on the page, each annotated with exactly the ancestor path and sibling position needed to disambiguate it from every other `<input>`.
 
 ### Element queries (`ElementQueryTools`) — read-only
 
@@ -219,6 +234,7 @@ src/main/java/uk/xpathy/selenium/mcp/
 ├── tools/                        # @McpTool-annotated classes — the MCP-facing surface
 │   ├── ToolsConfig.java           # Produces the single shared Tools bean
 │   ├── BrowserTools.java          # Lifecycle, navigation, click/sendKeys
+│   ├── PageSourceTools.java       # Token-efficient JSON views of the page: scripts, styles, element tree, filtered element queries
 │   ├── ElementQueryTools.java     # Read-only element state queries
 │   ├── WaitTools.java             # Explicit waits
 │   ├── AlertTools.java            # JS alert/confirm/prompt dialogs
@@ -241,6 +257,7 @@ src/main/java/uk/xpathy/selenium/mcp/
 │   ├── Locators.java               # Resolves locator strategy strings to By
 │   ├── Navigator.java              # Navigation (get/back/forward/refresh/url/title)
 │   ├── ElementInteractor.java      # click / sendKeys
+│   ├── PageSourceInspector.java    # JS-driven scripts/styles/element-tree extraction, backing PageSourceTools
 │   ├── ElementInspector.java       # Read-only element queries
 │   ├── WaitHelper.java             # Explicit waits, incl. page load / JS condition / element count
 │   ├── AlertHandler.java           # Alert/confirm/prompt dialogs
