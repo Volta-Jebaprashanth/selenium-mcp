@@ -2,7 +2,6 @@ package uk.xpathy.selenium.mcp.webdriver;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -110,7 +109,7 @@ public class ElementInspector {
     }
 
     public List<String> getTexts(By locator) {
-        return driver.findElements(locator).stream().map(WebElement::getText).collect(Collectors.toList());
+        return driver.findElements(locator).stream().map(element -> element.getText()).collect(Collectors.toList());
     }
 
     public List<String> getTexts(String locatorType, String locatorValue) {

@@ -63,7 +63,7 @@ public class CookieTools {
             try {
                 Set<Cookie> cookies = tools.getAllCookies();
                 if (cookies.isEmpty()) return "No cookies set.";
-                return cookies.stream().map(Cookie::toString).collect(Collectors.joining("\n"));
+                return cookies.stream().map(cookie -> cookie.toString()).collect(Collectors.joining("\n"));
             } catch (Exception e) {
                 return "Failed to get cookies: " + e.getMessage();
             }

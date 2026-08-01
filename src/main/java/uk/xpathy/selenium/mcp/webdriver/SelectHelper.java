@@ -55,7 +55,7 @@ public class SelectHelper {
 
     public List<String> getSelectedOptionsText(By locator) {
         return select(locator).getAllSelectedOptions().stream()
-                .map(org.openqa.selenium.WebElement::getText)
+                .map(option -> option.getText())
                 .collect(Collectors.toList());
     }
 
