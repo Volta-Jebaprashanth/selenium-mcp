@@ -21,8 +21,11 @@ import java.util.Set;
  * ({@link Navigator}, {@link ElementInteractor}, {@link ElementInspector}, {@link WaitHelper},
  * {@link AlertHandler}, {@link FrameHandler}, {@link WindowManager}, {@link CookieManager},
  * {@link ScreenshotTaker}, {@link ScriptRunner}, {@link ActionsHelper}, {@link SelectHelper},
- * {@link FileHelper}) act on the driver for the current session. Any of these can be
- * swapped independently without touching the others.
+ * {@link FileHelper}, {@link NetworkMonitor}, {@link ConsoleLogMonitor}) act on the driver for
+ * the current session. Any of these can be swapped independently without touching the others.
+ * <p>
+ * {@link NetworkMonitor} and {@link ConsoleLogMonitor} are CDP-backed and only function against
+ * Chrome/Edge; their methods throw {@link UnsupportedOperationException} on other browsers.
  */
 public class Tools {
 
@@ -42,6 +45,8 @@ public class Tools {
     private ActionsHelper actionsHelper;
     private SelectHelper selectHelper;
     private FileHelper fileHelper;
+    private NetworkMonitor networkMonitor;
+    private ConsoleLogMonitor consoleLogMonitor;
 
     public Tools() {
         this(new BrowserFactory());
@@ -91,6 +96,12 @@ public class Tools {
     }
 
     public void closeBrowser() {
+        if (networkMonitor != null) {
+            networkMonitor.close();
+        }
+        if (consoleLogMonitor != null) {
+            consoleLogMonitor.close();
+        }
         session.close();
         navigator = null;
         elementInteractor = null;
@@ -105,6 +116,8 @@ public class Tools {
         actionsHelper = null;
         selectHelper = null;
         fileHelper = null;
+        networkMonitor = null;
+        consoleLogMonitor = null;
     }
 
     // -- Navigation --
@@ -309,6 +322,35 @@ public class Tools {
 
     public void waitForUrlContains(String text, int timeoutSeconds) {
         requireWaitHelper().waitForUrlContains(text, timeoutSeconds);
+    }
+
+    public void waitForPageLoad(int timeoutSeconds) {
+        requireWaitHelper().waitForPageLoad(timeoutSeconds);
+    }
+
+    public void waitForJsCondition(String script, int timeoutSeconds) {
+        requireWaitHelper().waitForJsCondition(script, timeoutSeconds);
+    }
+
+    public void waitForElementCount(By locator, int expectedCount, int timeoutSeconds) {
+        requireWaitHelper().waitForElementCount(locator, expectedCount, timeoutSeconds);
+    }
+
+    public void waitForElementCount(String locatorType, String locatorValue, int expectedCount, int timeoutSeconds) {
+        requireWaitHelper().waitForElementCount(locatorType, locatorValue, expectedCount, timeoutSeconds);
+    }
+
+    public void waitForAttributeToBe(By locator, String attribute, String expectedValue, int timeoutSeconds) {
+        requireWaitHelper().waitForAttributeToBe(locator, attribute, expectedValue, timeoutSeconds);
+    }
+
+    public void waitForAttributeToBe(String locatorType, String locatorValue, String attribute,
+                                      String expectedValue, int timeoutSeconds) {
+        requireWaitHelper().waitForAttributeToBe(locatorType, locatorValue, attribute, expectedValue, timeoutSeconds);
+    }
+
+    public void waitForNumberOfWindowsToBe(int expectedCount, int timeoutSeconds) {
+        requireWaitHelper().waitForNumberOfWindowsToBe(expectedCount, timeoutSeconds);
     }
 
     // -- Alerts --
@@ -613,6 +655,91 @@ public class Tools {
         requireFileHelper().printToPdfFile(filePath);
     }
 
+    // -- Network capture / mocking / blocking / conditions --
+
+    public boolean isNetworkCaptureSupported() {
+        return requireNetworkMonitor().isSupported();
+    }
+
+    public void startNetworkCapture(String urlPattern) {
+        requireNetworkMonitor().startCapture(urlPattern);
+    }
+
+    public void stopNetworkCapture() {
+        requireNetworkMonitor().stopCapture();
+    }
+
+    public void clearNetworkLog() {
+        requireNetworkMonitor().clearLog();
+    }
+
+    public java.util.List<NetworkMonitor.NetworkEntry> getNetworkLog(String urlPattern, String method, int limit) {
+        return requireNetworkMonitor().getEntries(urlPattern, method, limit);
+    }
+
+    public void mockResponse(String urlPattern, String method, int status, String contentType,
+                              String body, java.util.Map<String, String> headers) {
+        requireNetworkMonitor().mockResponse(urlPattern, method, status, contentType, body, headers);
+    }
+
+    public void clearMockResponses() {
+        requireNetworkMonitor().clearMocks();
+    }
+
+    public void blockRequests(String urlPattern) {
+        requireNetworkMonitor().blockRequests(urlPattern);
+    }
+
+    public void clearBlockedRequests() {
+        requireNetworkMonitor().clearBlocked();
+    }
+
+    public int getPendingRequestCount() {
+        return requireNetworkMonitor().getPendingRequestCount();
+    }
+
+    public void armNetworkTracking() {
+        requireNetworkMonitor().armTracking();
+    }
+
+    public void waitForNetworkIdle(long idleMillis, int timeoutSeconds) {
+        requireNetworkMonitor().waitForNetworkIdle(idleMillis, timeoutSeconds);
+    }
+
+    public void setNetworkConditions(boolean offline, long latencyMillis, int downloadKbps, int uploadKbps) {
+        requireNetworkMonitor().setNetworkConditions(offline, latencyMillis, downloadKbps, uploadKbps);
+    }
+
+    public String getNetworkConditions() {
+        return requireNetworkMonitor().getNetworkConditions();
+    }
+
+    public void clearNetworkConditions() {
+        requireNetworkMonitor().clearNetworkConditions();
+    }
+
+    public void setBasicAuthCredentials(String username, String password) {
+        requireNetworkMonitor().setBasicAuthCredentials(username, password);
+    }
+
+    // -- Console log capture --
+
+    public boolean isConsoleCaptureSupported() {
+        return requireConsoleLogMonitor().isSupported();
+    }
+
+    public void startConsoleCapture() {
+        requireConsoleLogMonitor().start();
+    }
+
+    public java.util.List<ConsoleLogMonitor.ConsoleLogEntry> getConsoleLogs(String type, int limit) {
+        return requireConsoleLogMonitor().getEntries(type, limit);
+    }
+
+    public void clearConsoleLogs() {
+        requireConsoleLogMonitor().clear();
+    }
+
     private void attachCollaborators(WebDriver driver) {
         this.navigator = new Navigator(driver);
         this.elementInteractor = new ElementInteractor(driver, locators);
@@ -627,6 +754,8 @@ public class Tools {
         this.actionsHelper = new ActionsHelper(driver, locators);
         this.selectHelper = new SelectHelper(driver, locators);
         this.fileHelper = new FileHelper(driver, locators);
+        this.networkMonitor = new NetworkMonitor(driver);
+        this.consoleLogMonitor = new ConsoleLogMonitor(driver);
     }
 
     private Navigator requireNavigator() {
@@ -692,5 +821,15 @@ public class Tools {
     private FileHelper requireFileHelper() {
         session.requireDriver();
         return fileHelper;
+    }
+
+    private NetworkMonitor requireNetworkMonitor() {
+        session.requireDriver();
+        return networkMonitor;
+    }
+
+    private ConsoleLogMonitor requireConsoleLogMonitor() {
+        session.requireDriver();
+        return consoleLogMonitor;
     }
 }

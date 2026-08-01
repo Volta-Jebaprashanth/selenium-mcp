@@ -17,7 +17,7 @@ There is no Maven wrapper (`mvnw`) committed; use a locally installed Maven 3.9+
 
 The server can't be smoke-tested by just running the jar and typing at it — it speaks the MCP stdio protocol, not a human-friendly REPL. To verify a change end-to-end, either write a unit/integration test against `uk.xpathy.selenium.mcp.webdriver.Tools` directly (it has no Spring/MCP dependency and can be instantiated plainly), or wire the jar into an actual MCP client.
 
-## Architecture — two layers, keep them separate
+## Architecture — three layers, keep them separate
 
 ```
 tools/      @McpTool-annotated classes. MCP-facing only: parameter validation,
@@ -29,13 +29,22 @@ webdriver/  Plain-Java Selenium layer. No Spring, no MCP annotations, no
             the facade/entry point; BrowserFactory, BrowserSession, Locators,
             Navigator, and ElementInteractor are its collaborators, each with
             one responsibility.
+
+http/       Plain-Java REST client (ApiClient), with no Selenium/Spring/MCP
+            dependency and no relationship to the browser session at all.
+            Backs tools/ApiTools.java for API automation that's independent
+            of — and usable without — an open browser.
 ```
 
-When adding a new capability:
+When adding a new browser capability:
 1. Add the Selenium logic to `webdriver/` (usually as a method on `Tools`, delegating to the right collaborator — or a new collaborator if it's a distinct concern).
 2. Add a thin `@McpTool` wrapper method in `tools/BrowserTools.java` (or a new `tools/*Tools.java` class if it's a different domain) that checks preconditions and translates exceptions to strings.
 
-Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Spring types in `webdriver/`. `webdriver/Tools` is meant to be usable standalone for hand-written or generated Selenium tests, independent of the MCP server.
+When adding a new capability that has nothing to do with the browser (e.g. another kind of outbound client), give it its own top-level package mirroring `http/` rather than bolting it onto `webdriver/`.
+
+Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Spring types in `webdriver/` or `http/`. `webdriver/Tools` is meant to be usable standalone for hand-written or generated Selenium tests, independent of the MCP server; `http/ApiClient` is meant to be usable standalone too, independent of both Selenium and the MCP server.
+
+**CDP-backed features are Chrome/Edge only.** `webdriver/NetworkMonitor` (network capture/mocking/blocking/conditions, HTTP Basic auth) and `webdriver/ConsoleLogMonitor` (console log capture) are built on Selenium 4's Chrome DevTools Protocol support (`HasDevTools`/`NetworkInterceptor`/`HasLogEvents`), which Firefox doesn't implement. Their methods throw `UnsupportedOperationException` when the driver doesn't support it; the `tools/NetworkTools` wrappers catch that specifically and return an explanatory string rather than letting it read as a generic failure.
 
 ## Conventions
 
@@ -54,4 +63,4 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 
 ## Adding dependencies
 
-Selenium version and WebDriverManager version are pinned explicitly in `pom.xml` (not managed via a BOM) — bump them there deliberately, not implicitly via a parent/BOM update.
+Selenium version and WebDriverManager version are pinned explicitly in `pom.xml` (not managed via a BOM) — bump them there deliberately, not implicitly via a parent/BOM update. Selenium in particular needs to stay reasonably current: its bundled CDP (`selenium-devtools-vNN`) modules only cover a handful of Chrome major versions at a time, and `NetworkMonitor`/`ConsoleLogMonitor` fall back to a no-op CDP implementation (raising `DevToolsException`) against a released Chrome/Edge that's newer than what the pinned Selenium version supports. `jackson-databind` is declared explicitly (version resolved via the Spring Boot parent's dependency management) for JSON request/response handling in `NetworkTools`/`ApiTools` — it was previously only available as an incidental transitive dependency of `webdrivermanager`, which isn't something to build on.

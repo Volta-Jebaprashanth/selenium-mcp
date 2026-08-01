@@ -9,6 +9,9 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
  * MCP-facing wrapper around {@link Tools} for explicit waits. Every wait method blocks
  * up to the given timeout and returns a failure string (rather than throwing) if the
  * condition is never met.
+ * <p>
+ * For waiting on in-flight network requests to settle (e.g. after a click that triggers
+ * XHR/fetch calls), see {@code waitForNetworkIdle} in {@link NetworkTools}.
  */
 @Component
 public class WaitTools {
@@ -130,6 +133,88 @@ public class WaitTools {
                 return "URL now contains \"" + text + "\"";
             } catch (Exception e) {
                 return "Timed out waiting for URL: " + e.getMessage();
+            }
+        }
+    }
+
+    @McpTool(description = "Wait until the page has finished loading (document.readyState is \"complete\"), up to the given timeout.")
+    public String waitForPageLoad(
+            @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
+        synchronized (tools) {
+            if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
+            try {
+                tools.waitForPageLoad(resolveTimeout(timeoutSeconds));
+                return "Page has finished loading.";
+            } catch (Exception e) {
+                return "Timed out waiting for page to load: " + e.getMessage();
+            }
+        }
+    }
+
+    @McpTool(description = "Wait until a custom JavaScript expression evaluates truthy, up to the given timeout. "
+            + "Use \"return\" for a full function body (e.g. \"return document.title === 'Done'\"), or a bare "
+            + "boolean expression (e.g. \"!!document.querySelector('.ready')\").")
+    public String waitForJsCondition(
+            @McpToolParam(description = "JavaScript expression or \"return ...\" statement that should evaluate truthy", required = true) String script,
+            @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
+        synchronized (tools) {
+            if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
+            try {
+                tools.waitForJsCondition(script, resolveTimeout(timeoutSeconds));
+                return "Condition is now true.";
+            } catch (Exception e) {
+                return "Timed out waiting for JavaScript condition: " + e.getMessage();
+            }
+        }
+    }
+
+    @McpTool(description = "Wait until the number of elements matching a locator equals an expected count, up to the given timeout.")
+    public String waitForElementCount(
+            @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
+            @McpToolParam(description = "The locator value to find the elements", required = true) String locatorValue,
+            @McpToolParam(description = "The expected number of matching elements", required = true) Integer expectedCount,
+            @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
+        synchronized (tools) {
+            if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
+            try {
+                tools.waitForElementCount(locatorType, locatorValue, expectedCount, resolveTimeout(timeoutSeconds));
+                return "Element count is now " + expectedCount + ".";
+            } catch (Exception e) {
+                return "Timed out waiting for element count: " + e.getMessage();
+            }
+        }
+    }
+
+    @McpTool(description = "Wait until an element's attribute or DOM property equals an expected value, up to the given timeout.")
+    public String waitForAttributeToBe(
+            @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
+            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
+            @McpToolParam(description = "The attribute or DOM property name to check", required = true) String attribute,
+            @McpToolParam(description = "The expected value of the attribute", required = true) String expectedValue,
+            @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
+        synchronized (tools) {
+            if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
+            try {
+                tools.waitForAttributeToBe(locatorType, locatorValue, attribute, expectedValue, resolveTimeout(timeoutSeconds));
+                return "Attribute \"" + attribute + "\" is now \"" + expectedValue + "\".";
+            } catch (Exception e) {
+                return "Timed out waiting for attribute value: " + e.getMessage();
+            }
+        }
+    }
+
+    @McpTool(description = "Wait until the number of open windows/tabs equals an expected count, up to the given timeout. "
+            + "Useful after an action expected to open or close a tab.")
+    public String waitForNumberOfWindowsToBe(
+            @McpToolParam(description = "The expected number of open windows/tabs", required = true) Integer expectedCount,
+            @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
+        synchronized (tools) {
+            if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
+            try {
+                tools.waitForNumberOfWindowsToBe(expectedCount, resolveTimeout(timeoutSeconds));
+                return "Number of windows is now " + expectedCount + ".";
+            } catch (Exception e) {
+                return "Timed out waiting for window count: " + e.getMessage();
             }
         }
     }
