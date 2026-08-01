@@ -2,7 +2,8 @@
 
 ### The only Java-based Selenium MCP server with Playwright-MCP-style smart element discovery
 
-[![CI](https://github.com/JebaprashanthBlt/selenium-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/JebaprashanthBlt/selenium-mcp/actions/workflows/ci.yml)
+[![CI](https://github.com/Volta-Jebaprashanth/selenium-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Volta-Jebaprashanth/selenium-mcp/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/Volta-Jebaprashanth/selenium-mcp)](https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 [![Java 21+](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -37,7 +38,13 @@ It also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — pas
 - Maven 3.9+
 - Chrome, Firefox, or Edge installed locally (drivers are fetched automatically by [WebDriverManager](https://github.com/bonigarcia/webdrivermanager) on first use). Network capture/mocking/blocking and console log capture require Chrome or Edge — they're backed by the Chrome DevTools Protocol, which Firefox doesn't expose.
 
-## Build
+## Get the jar
+
+Every push to `main` builds and publishes a new [GitHub Release](https://github.com/Volta-Jebaprashanth/selenium-mcp/releases) with the jar attached — no need to build from source. Grab the latest one directly:
+
+**[⬇ Download selenium-mcp.jar (latest release)](https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest/download/selenium-mcp.jar)**
+
+Or build it yourself:
 
 ```bash
 mvn clean package
@@ -48,19 +55,19 @@ mvn clean package
 The server communicates over stdio, so it's meant to be launched by an MCP client rather than run standalone in a terminal.
 
 ```bash
-java -jar target/selenium-mcp-1.0-SNAPSHOT.jar
+java -jar selenium-mcp.jar
 ```
 
 ### Registering with an MCP client
 
-Example client config (adjust the jar path to your build output):
+Download the jar (see [Get the jar](#get-the-jar) above), then point your MCP client at it — adjust the path to wherever you saved it:
 
 ```json
 {
   "mcpServers": {
     "selenium-mcp": {
       "command": "java",
-      "args": ["-jar", "/absolute/path/to/target/selenium-mcp-1.0-SNAPSHOT.jar"]
+      "args": ["-jar", "/absolute/path/to/selenium-mcp.jar"]
     }
   }
 }

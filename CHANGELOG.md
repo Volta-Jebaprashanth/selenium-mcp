@@ -18,4 +18,4 @@ once it reaches a 1.0.0 release.
 - Project documentation: [README.md](README.md), [AGENTS.md](AGENTS.md).
 - Open-source project scaffolding: [LICENSE.md](LICENSE.md), [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md).
 
-[Unreleased]: https://github.com/JebaprashanthBlt/selenium-mcp/commits/main
+[Unreleased]: https://github.com/Volta-Jebaprashanth/selenium-mcp/commits/main

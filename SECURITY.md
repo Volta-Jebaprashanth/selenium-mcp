@@ -14,7 +14,7 @@ fixes are applied to the `main` branch only.
 
 Please **do not open a public GitHub issue** for security vulnerabilities.
 
-Instead, report it privately using [GitHub's private vulnerability reporting](https://github.com/JebaprashanthBlt/selenium-mcp/security/advisories/new) for this repository (Security tab → "Report a vulnerability").
+Instead, report it privately using [GitHub's private vulnerability reporting](https://github.com/Volta-Jebaprashanth/selenium-mcp/security/advisories/new) for this repository (Security tab → "Report a vulnerability").
 
 Include as much detail as you can:
 

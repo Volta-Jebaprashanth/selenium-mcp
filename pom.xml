@@ -54,6 +54,7 @@
 </dependencies>
 
 <build>
+    <finalName>selenium-mcp</finalName>
     <plugins>
         <plugin>
             <groupId>org.springframework.boot</groupId>

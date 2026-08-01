@@ -15,7 +15,7 @@ This project follows a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, 
 ## Getting started
 
 ```bash
-git clone https://github.com/JebaprashanthBlt/selenium-mcp.git
+git clone https://github.com/Volta-Jebaprashanth/selenium-mcp.git
 cd selenium-mcp
 mvn clean package
 ```
@@ -57,7 +57,7 @@ Add tests under `src/test/java`, mirroring the package structure of the code und
 
 ## Reporting bugs
 
-Open a [GitHub issue](https://github.com/JebaprashanthBlt/selenium-mcp/issues) with:
+Open a [GitHub issue](https://github.com/Volta-Jebaprashanth/selenium-mcp/issues) with:
 
 - The browser and version you were driving (Chrome/Firefox/Edge)
 - Your OS and Java version (`java -version`)
