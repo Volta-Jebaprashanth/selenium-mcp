@@ -7,6 +7,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 [![Java 21+](https://img.shields.io/badge/Java-21%2B-orange.svg)](https://adoptium.net/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Website](https://img.shields.io/badge/docs-selenium--mcp.xpathy.uk-blue.svg)](https://selenium-mcp.xpathy.uk/)
+
+**[📖 Full docs, interactive tool reference & quickstart →](https://selenium-mcp.xpathy.uk/)**
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server, built in Java with Spring Boot and Spring AI's MCP server starter, that lets AI agents (Claude Desktop, Claude Code, Cursor, etc.) drive a real Chrome, Firefox, or Edge browser through Selenium WebDriver — and, unlike every other Selenium MCP server, gives them a *structured* way to find elements instead of forcing them to parse raw HTML.
 
@@ -74,6 +77,8 @@ Download the jar (see [Get the jar](#get-the-jar) above), then point your MCP cl
 ```
 
 ## Available tools
+
+For the full searchable tool surface (112 tools across 16 categories) with parameters and examples, see the [MCP Tools Reference](https://selenium-mcp.xpathy.uk/docs/tools) on the docs site. Summary by category below.
 
 Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpath`, `className`/`class`, `linkText`, `partialLinkText`, `tagName`/`tag`.
 
