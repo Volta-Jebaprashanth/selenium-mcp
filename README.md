@@ -1,6 +1,6 @@
 # selenium-mcp
 
-### The only Java-based Selenium MCP server with Playwright-MCP-style smart element discovery
+### The Java-based Selenium MCP server built for test automation engineers, with Playwright-MCP-style smart element discovery
 
 [![CI](https://github.com/Volta-Jebaprashanth/selenium-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Volta-Jebaprashanth/selenium-mcp/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/Volta-Jebaprashanth/selenium-mcp)](https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest)
@@ -11,19 +11,19 @@
 
 **[📖 Full docs, interactive tool reference & quickstart →](https://selenium-mcp.xpathy.uk/)**
 
-A [Model Context Protocol](https://modelcontextprotocol.io) server, built in Java with Spring Boot and Spring AI's MCP server starter, that lets AI agents (Claude Desktop, Claude Code, Cursor, etc.) drive a real Chrome, Firefox, or Edge browser through Selenium WebDriver — and, unlike every other Selenium MCP server, gives them a *structured* way to find elements instead of forcing them to parse raw HTML.
+A [Model Context Protocol](https://modelcontextprotocol.io) server, built in Java with Spring Boot and Spring AI's MCP server starter, for **test automation engineers working in Java, Selenium, and REST Assured**. It lets AI coding assistants (Claude Code, Cursor, Claude Desktop, etc.) drive a real Chrome, Firefox, or Edge browser through Selenium WebDriver while you write and maintain your test suite — and, unlike every other Selenium MCP server, gives them a *structured* way to find elements instead of forcing them to parse raw HTML.
 
 ## The problem this solves
 
-Every browser-automation agent runs into the same wall: dump the entire raw HTML page source into the model's context just to find one element, guess at a locator from what you can see, and hit `element not unique, multiple matches found`. It's slow, it burns context, and it's flaky.
+Every test automation engineer who's tried pairing an AI coding assistant with a Selenium suite hits the same wall: the assistant can't see the page, so it either dumps the entire raw HTML page source into its context just to find one element and guesses at a locator — hitting `element not unique, multiple matches found` — or you end up opening DevTools yourself and pasting the selector back into the chat. It's slow, it burns context, and it's flaky, and it turns "AI-assisted test automation" into you doing the automation part and the AI doing the typing.
 
-[Playwright MCP](https://github.com/microsoft/playwright-mcp) solved this on the Node/Playwright side with structured accessibility-tree snapshots instead of raw DOM dumps. **`selenium-mcp` brings that same capability to the Java/Selenium ecosystem — as far as we're aware, it's the only Selenium-based MCP server that does.**
+[Playwright MCP](https://github.com/microsoft/playwright-mcp) solved this on the Node/Playwright side with structured accessibility-tree snapshots instead of raw DOM dumps. **`selenium-mcp` brings that same capability to the Java/Selenium/REST Assured test automation ecosystem — as far as we're aware, it's the only Selenium-based MCP server that does, and the only one built specifically for test automation engineers rather than general browser-automation agents.**
 
 `PageSourceTools` gives an agent focused, JSON-shaped views of the page instead of raw markup — scripts only, styles only, a compact element tree — and, most powerfully, `getPageElementsFiltered`: it finds *every* element matching a locator in one call and hands back the exact ancestor chain and sibling position (`div.container > form#login > input:nth-of-type(2)`) needed to write a locator that's unique on the first try, no more trial-and-error against the live page. See [Page inspection](#page-inspection-pagesourcetools--the-flagship-feature) below.
 
 | | selenium-mcp | Other Selenium MCP servers | Playwright MCP |
 |---|---|---|---|
-| Language / stack | Java (Spring Boot) | mostly Java / Python wrappers | Node.js |
+| Language / stack | Java (Spring Boot) | mostly Node.js / Python | Node.js |
 | Browser engine | Selenium WebDriver (Chrome, Firefox, Edge) | Selenium WebDriver | Playwright (Chromium, Firefox, WebKit) |
 | Structured element discovery (no raw HTML dump) | ✅ filtered queries with ancestor/sibling context | ❌ raw `getPageSource` only | ✅ accessibility-tree snapshot |
 | CDP network capture, mocking, blocking, console logs | ✅ | rare | ✅ |
@@ -31,9 +31,9 @@ Every browser-automation agent runs into the same wall: dump the entire raw HTML
 
 ## What it does
 
-Beyond element discovery, it's a full Selenium automation surface: open a browser, navigate, read the page source, click elements, type into fields — all via standard Selenium locators (`id`, `name`, `css`, `xpath`, `className`, `linkText`, `partialLinkText`, `tagName`).
+Beyond element discovery, it's a full Selenium automation surface for writing and maintaining a real test suite: open a browser, navigate, read the page source, click elements, type into fields — all via standard Selenium locators (`id`, `name`, `css`, `xpath`, `className`, `linkText`, `partialLinkText`, `tagName`).
 
-It also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — passive network capture, request mocking/blocking, simulated network conditions, and browser console log capture — plus a standalone REST client for API automation, so an agent can combine UI-driven and API-driven testing in one workflow. See [Network capture, mocking & console logs](#network-capture-mocking--console-logs-networktools--chromeedge-only) and [REST API automation](#rest-api-automation-apitools) below.
+It also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — passive network capture, request mocking/blocking, simulated network conditions, and browser console log capture, useful for diagnosing flaky waits — plus a standalone REST client for API automation, so a test automation engineer can get AI help combining REST Assured-style API checks with Selenium UI flows in one test, in one workflow. See [Network capture, mocking & console logs](#network-capture-mocking--console-logs-networktools--chromeedge-only) and [REST API automation](#rest-api-automation-apitools) below.
 
 ## Prerequisites
 
