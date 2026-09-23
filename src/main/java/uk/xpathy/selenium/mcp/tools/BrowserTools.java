@@ -1,5 +1,6 @@
 package uk.xpathy.selenium.mcp.tools;
 
+import org.openqa.selenium.WebDriverException;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,8 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
  */
 @Component
 public class BrowserTools {
+
+    private static final int DEFAULT_DEBUG_PORT = 9222;
 
     private final Tools tools;
 
@@ -49,15 +52,92 @@ public class BrowserTools {
         }
     }
 
-    @McpTool(description = "Close the currently open browser and release the driver.")
+    @McpTool(description = "Connect to a Chrome or Edge browser that is already running with remote debugging enabled "
+            + "(started with --remote-debugging-port=<port> and a non-default --user-data-dir), instead of launching a new one. "
+            + "Controls whichever tab is currently active; use the window tools to switch tabs. "
+            + "closeBrowser will disconnect and leave the browser running.")
+    public String connectToBrowser(
+            @McpToolParam(description = "Browser that is running: chrome or edge. Defaults to chrome.", required = false)
+            String browser,
+            @McpToolParam(description = "Remote-debugging address as host:port. Defaults to 127.0.0.1:9222.", required = false)
+            String debuggerAddress) {
+        synchronized (tools) {
+            if (tools.isBrowserOpen()) {
+                return "Browser is already open. Call closeBrowser first to connect to a different one.";
+            }
+            try {
+                tools.attachBrowser(browser, debuggerAddress);
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                return e.getMessage();
+            } catch (WebDriverException e) {
+                return "Failed to connect to the browser: " + firstLine(e.getMessage());
+            }
+            return "Connected to " + tools.getBrowserName() + " at " + tools.getDebuggerAddress()
+                    + " (current page: " + tools.getCurrentUrl() + "). closeBrowser will disconnect and leave it running.";
+        }
+    }
+
+    @McpTool(description = "Launch Chrome or Edge with remote debugging enabled and connect to it. Unlike openBrowser, "
+            + "the browser keeps running after closeBrowser, so test code can attach to the same browser via "
+            + "ChromeOptions.setExperimentalOption(\"debuggerAddress\", \"127.0.0.1:<port>\") - e.g. run a failing test "
+            + "up to the failure, then inspect the live page here. The test and this server should take turns rather than "
+            + "drive the browser at the same time. If a browser is already listening on the port, connects to it instead.")
+    public String launchDebugBrowser(
+            @McpToolParam(description = "Browser to launch: chrome or edge. Defaults to chrome.", required = false)
+            String browser,
+            @McpToolParam(description = "Remote-debugging port. Defaults to 9222.", required = false)
+            Integer port,
+            @McpToolParam(description = "Profile directory for the browser. Defaults to a dedicated folder under the "
+                    + "system temp dir; Chrome refuses remote debugging on your everyday profile.", required = false)
+            String userDataDir) {
+        synchronized (tools) {
+            if (tools.isBrowserOpen()) {
+                return "Browser is already open. Call closeBrowser first to launch a debug browser.";
+            }
+            int debugPort = port == null ? DEFAULT_DEBUG_PORT : port;
+            String address = "127.0.0.1:" + debugPort;
+            try {
+                if (tools.isDebuggerListening(address)) {
+                    tools.attachBrowser(browser, address);
+                    return "A browser was already listening on " + address + "; connected to "
+                            + tools.getBrowserName() + " there (current page: " + tools.getCurrentUrl() + ").";
+                }
+                tools.launchDebugBrowser(browser, debugPort, userDataDir);
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                return e.getMessage();
+            } catch (WebDriverException e) {
+                return "Failed to launch the debug browser: " + firstLine(e.getMessage());
+            }
+            return "Launched " + tools.getBrowserName() + " with remote debugging on " + address
+                    + ". Test code can attach with debuggerAddress " + address
+                    + ". closeBrowser will disconnect and leave it running.";
+        }
+    }
+
+    @McpTool(description = "Close the currently open browser and release the driver. A browser attached via "
+            + "connectToBrowser or launchDebugBrowser is only disconnected and keeps running.")
     public String closeBrowser() {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) {
                 return "No browser is open.";
             }
+            if (tools.isAttached()) {
+                String message = "Disconnected from " + tools.getBrowserName() + " at " + tools.getDebuggerAddress()
+                        + "; the browser is still running.";
+                tools.closeBrowser();
+                return message;
+            }
             tools.closeBrowser();
             return "Browser closed.";
         }
+    }
+
+    private static String firstLine(String message) {
+        if (message == null) {
+            return "unknown error";
+        }
+        int newline = message.indexOf('\n');
+        return newline < 0 ? message : message.substring(0, newline);
     }
 
     @McpTool(description = "Navigate the currently open browser to the given URL.")

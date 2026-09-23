@@ -46,6 +46,8 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 
 **CDP-backed features are Chrome/Edge only.** `webdriver/NetworkMonitor` (network capture/mocking/blocking/conditions, HTTP Basic auth) and `webdriver/ConsoleLogMonitor` (console log capture) are built on Selenium 4's Chrome DevTools Protocol support (`HasDevTools`/`NetworkInterceptor`/`HasLogEvents`), which Firefox doesn't implement. Their methods throw `UnsupportedOperationException` when the driver doesn't support it; the `tools/NetworkTools` wrappers catch that specifically and return an explanatory string rather than letting it read as a generic failure.
 
+**Attaching over a remote-debugging port is Chrome/Edge only too.** `BrowserFactory.attach`/`launchDebuggable` return an `AttachedDriver` (driver + its `DriverService`). `BrowserSession.close()` disconnects such a session by stopping the service, never by quitting the driver, so a browser the user or a test is also using stays up. Keep that distinction if you touch session teardown.
+
 ## Conventions
 
 - **Locator strategy strings** (`id`, `name`, `css`/`cssSelector`, `xpath`, `className`/`class`, `linkText`, `partialLinkText`, `tagName`/`tag`) are resolved in one place: `Locators.toBy()`. If you add a new strategy, add it there, not inline elsewhere.

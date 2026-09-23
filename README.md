@@ -87,7 +87,9 @@ Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpat
 | Tool | Description |
 |---|---|
 | `openBrowser` | Opens a browser window (`chrome`, `firefox`, or `edge`; defaults to `chrome`), with optional `headless`, `incognito`, `windowSize` (e.g. `1920x1080`), and `userAgent`. Reuses an already-open browser. |
-| `closeBrowser` | Closes the open browser and releases the driver. |
+| `connectToBrowser` | Connects to a Chrome/Edge that is already running with remote debugging (`--remote-debugging-port=<port>` plus a separate `--user-data-dir`), via `debuggerAddress` (defaults to `127.0.0.1:9222`). |
+| `launchDebugBrowser` | Launches Chrome/Edge with remote debugging on `port` (default `9222`) and connects to it. The browser keeps running after `closeBrowser`, so test code can attach to the same browser with `ChromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9222")`. Useful for letting an agent inspect the live page where a test failed. If something is already listening on the port, connects to it instead. |
+| `closeBrowser` | Closes the open browser and releases the driver. A browser connected via `connectToBrowser`/`launchDebugBrowser` is only disconnected and keeps running. |
 | `navigate` | Navigates the open browser to a URL. |
 | `back` / `forward` / `refresh` | Browser history navigation. |
 | `getCurrentUrl` | Returns the URL of the current page. |

@@ -97,6 +97,43 @@ public class Tools {
         return driver;
     }
 
+    /**
+     * Attaches to a Chrome/Edge already running with {@code --remote-debugging-port}, if no browser
+     * is open. {@link #closeBrowser()} will disconnect and leave that browser running.
+     *
+     * @param debuggerAddress {@code host:port}; defaults to {@code 127.0.0.1:9222} when blank
+     */
+    public WebDriver attachBrowser(String browser, String debuggerAddress) {
+        WebDriver driver = session.attach(browser, debuggerAddress);
+        attachCollaborators(driver);
+        return driver;
+    }
+
+    /**
+     * Launches a Chrome/Edge with remote debugging on {@code port} and attaches to it, if no browser
+     * is open. The browser keeps running after {@link #closeBrowser()}, so other clients (e.g. a test)
+     * can attach to {@code 127.0.0.1:<port>}.
+     *
+     * @param userDataDir profile directory, or {@code null} for a default one under the system temp dir
+     */
+    public WebDriver launchDebugBrowser(String browser, int port, String userDataDir) {
+        WebDriver driver = session.launchDebuggable(browser, port, userDataDir);
+        attachCollaborators(driver);
+        return driver;
+    }
+
+    public boolean isAttached() {
+        return session.isAttached();
+    }
+
+    public String getDebuggerAddress() {
+        return session.getDebuggerAddress();
+    }
+
+    public boolean isDebuggerListening(String debuggerAddress) {
+        return session.isDebuggerListening(debuggerAddress);
+    }
+
     public void closeBrowser() {
         if (networkMonitor != null) {
             networkMonitor.close();
