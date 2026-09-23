@@ -175,7 +175,7 @@ public class BrowserTools {
         }
     }
 
-    @McpTool(description = "Refresh the current page.")
+    @McpTool(description = "Reload the current page in the open browser, equivalent to pressing the browser refresh button. Page state such as form input and scroll position may be lost.")
     public String refresh() {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) {
