@@ -297,8 +297,8 @@ public class NetworkMonitor {
     private synchronized void record(HttpRequest req, HttpResponse res, long durationMillis, boolean mocked) {
         Map<String, String> reqHeaders = headerMap(req.getHeaderNames(), req::getHeader);
         Map<String, String> resHeaders = headerMap(res.getHeaderNames(), res::getHeader);
-        String reqBody = truncate(safeBody(() -> Contents.string(req)));
-        String resBody = truncate(safeBody(() -> Contents.string(res)));
+        String reqBody = truncate(safeBody(() -> req.contentAsString()));
+        String resBody = truncate(safeBody(() -> res.contentAsString()));
 
         entries.addLast(new NetworkEntry(Instant.now(), req.getMethod().name(), req.getUri(),
                 reqHeaders, reqBody, res.getStatus(), resHeaders, resBody, durationMillis, mocked));

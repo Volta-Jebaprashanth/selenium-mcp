@@ -36,7 +36,7 @@ public class ActionsTools {
         }
     }
 
-    @McpTool(description = "Double-click an element.")
+    @McpTool(description = "Double-click the element identified by the given locator in the open browser. Use for controls that react to dblclick, such as editable cells or list items that open on double-click.")
     public String doubleClick(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
