@@ -10,7 +10,8 @@ A Spring Boot MCP (Model Context Protocol) server that exposes Selenium browser 
 
 ```bash
 mvn clean package        # compile + package the jar
-mvn test                 # run tests (none exist yet — add them under src/test/java)
+mvn test                 # unit tests
+mvn test -Dselenium.it=true   # also run ChromeIntegrationTest against a real headless Chrome
 ```
 
 There is no Maven wrapper (`mvnw`) committed; use a locally installed Maven 3.9+ with `JAVA_HOME` set to a JDK 21.
@@ -51,6 +52,10 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 ## Conventions
 
 - **Locator strategy strings** (`id`, `name`, `css`/`cssSelector`, `xpath`, `className`/`class`, `linkText`, `partialLinkText`, `tagName`/`tag`) are resolved in one place: `Locators.toBy()`. If you add a new strategy, add it there, not inline elsewhere.
+- **Every `tools/*Tools` class except `BrowserTools` carries `@ToolGroup("<name>")`** so users can switch it off with `--selenium.mcp.tool-groups` / `--selenium.mcp.exclude-tool-groups`. Give a new tool class a group (an existing one, or a new name documented in the README's "Loading fewer tools" list).
+- **Format exception text with `ErrorMessages.of(e)`**, not `e.getMessage()` — `WebDriverException.getMessage()` appends build/system/capabilities/session diagnostics that bury the actual cause.
+- **Element tools that act on one element** should accept the optional `index`/`visibleOnly` parameters (descriptions in `ElementMatch`) and resolve them with `tools.locator(...)`, which builds a `FilteredBy` — don't hand-roll `findElements().get(n)`.
+- **Prefer raw CDP via `HasCdp.executeCdpCommand`** for one-shot Chrome/Edge commands (see `ScreenshotTaker.captureFullPage`, `InitScriptManager`): it sends plain JSON and keeps working when Chrome outpaces Selenium's bundled `selenium-devtools-vNN` modules, unlike `HasDevTools`/`NetworkInterceptor`/`HasLogEvents`.
 - **`@McpTool` methods return strings**, always — success and failure both. Catch exceptions in the tool wrapper and return a descriptive message; don't let exceptions propagate out of an `@McpTool` method.
 - **Precondition checks** ("is a browser open?") belong in the `tools/` wrapper, mirroring the existing pattern in `BrowserTools` (`if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";`).
 - **`BrowserTools` methods are `synchronized`** — there's one browser session per server process; keep new stateful tool methods synchronized too rather than introducing concurrent access to the driver.

@@ -10,6 +10,7 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
  * and printing the current page to PDF.
  */
 @Component
+@ToolGroup("files")
 public class FileTools {
 
     private final Tools tools;
@@ -32,7 +33,7 @@ public class FileTools {
                 tools.uploadFile(locatorType, locatorValue, absoluteFilePath);
                 return "Uploaded file " + absoluteFilePath;
             } catch (Exception e) {
-                return "Failed to upload file: " + e.getMessage();
+                return "Failed to upload file: " + ErrorMessages.of(e);
             }
         }
     }
@@ -50,7 +51,7 @@ public class FileTools {
                 tools.printToPdfFile(filePath);
                 return "PDF saved to " + filePath;
             } catch (Exception e) {
-                return "Failed to print to PDF: " + e.getMessage();
+                return "Failed to print to PDF: " + ErrorMessages.of(e);
             }
         }
     }

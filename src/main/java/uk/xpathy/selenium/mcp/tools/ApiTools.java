@@ -17,6 +17,7 @@ import java.util.Map;
  * test data around a UI flow, or for testing a service that has no UI.
  */
 @Component
+@ToolGroup("api")
 public class ApiTools {
 
     private static final String HEADERS_DESC =
@@ -92,9 +93,9 @@ public class ApiTools {
             result.put("durationMillis", response.durationMillis());
             return objectMapper.writeValueAsString(result);
         } catch (IllegalArgumentException e) {
-            return "Invalid URL: " + e.getMessage();
+            return "Invalid URL: " + ErrorMessages.of(e);
         } catch (Exception e) {
-            return "Request failed: " + e.getMessage();
+            return "Request failed: " + ErrorMessages.of(e);
         }
     }
 

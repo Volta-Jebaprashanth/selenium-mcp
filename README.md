@@ -76,11 +76,27 @@ Download the jar (see [Get the jar](#get-the-jar) above), then point your MCP cl
 }
 ```
 
+### Loading fewer tools
+
+Every tool's schema costs the client tokens. Tool classes are grouped, and groups you don't need can be switched off with a launch argument. `BrowserTools` (lifecycle, navigation, click, sendKeys) is always on.
+
+Groups: `actions`, `alerts`, `api`, `cookies`, `elements`, `files`, `frames`, `network`, `page-source`, `screenshots`, `script`, `select`, `system`, `wait`, `window`.
+
+```json
+"args": ["-jar", "/absolute/path/to/selenium-mcp.jar", "--selenium.mcp.exclude-tool-groups=api,network,cookies,alerts,select,files"]
+```
+
+Or allow-list instead: `--selenium.mcp.tool-groups=elements,page-source,wait,script,screenshots`. The exclude example above takes the server from 116 tools to 75.
+
 ## Available tools
 
-For the full searchable tool surface (112 tools across 16 categories) with parameters and examples, see the [MCP Tools Reference](https://selenium-mcp.xpathy.uk/docs/tools) on the docs site. Summary by category below.
+For the full searchable tool surface (116 tools across 16 categories) with parameters and examples, see the [MCP Tools Reference](https://selenium-mcp.xpathy.uk/docs/tools) on the docs site. Summary by category below.
 
 Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpath`, `className`/`class`, `linkText`, `partialLinkText`, `tagName`/`tag`.
+
+`click`, `sendKeys`, `getText`, `getAttribute`, `hover`, `doubleClick`, `rightClick`, `scrollIntoView`, and `takeElementScreenshot` also take optional `index` (zero-based, which match to use when the locator matches several elements) and `visibleOnly` (ignore hidden matches, applied before `index`).
+
+Errors come back as the driver's one-line message (e.g. `Script error: javascript error: Cannot read properties of undefined (reading 'click')`), without Selenium's build/system/capabilities/session diagnostics.
 
 ### Browser lifecycle & navigation (`BrowserTools`)
 
@@ -181,14 +197,15 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 
 | Tool | Description |
 |---|---|
-| `takeScreenshot` | Full-page screenshot — returns base64 PNG, or saves to a file path if given. |
+| `takeScreenshot` | Viewport screenshot by default; `fullPage=true` captures the whole scrollable page (Chrome/Edge via CDP, Firefox natively). Returns base64 PNG, or saves to a file path if given. Content scrolling inside its own container is only captured as far as it's visible. |
 | `takeElementScreenshot` | Screenshot of a single element. |
 
 ### JavaScript & scrolling (`ScriptTools`)
 
 | Tool | Description |
 |---|---|
-| `executeScript` | Runs arbitrary JavaScript in the page context and returns the result. |
+| `executeScript` | Runs JavaScript in the page context and returns the result (objects/arrays as JSON; a returned Promise is awaited). Optional `timeoutMs` overrides the 30-second script timeout for that call. |
+| `addInitScript` / `removeInitScript` | Registers JavaScript that runs at the start of every page load in the current tab (CDP `Page.addScriptToEvaluateOnNewDocument`), so helpers and hooks survive navigations and reloads. Chrome/Edge only. |
 | `scrollIntoView` | Scrolls an element into view. |
 | `scrollBy` | Scrolls by a pixel offset. |
 | `scrollToTop` / `scrollToBottom` | Scrolls to the page extremes. |
@@ -309,6 +326,8 @@ src/main/java/uk/xpathy/selenium/mcp/
 The `webdriver` package has no MCP or Spring dependency — it's a standalone Selenium utility layer that can also be used directly to hand-write or generate Selenium tests. `http` is likewise standalone and has no Selenium dependency — it's a plain REST client usable on its own. `tools` is a thin translation layer on top of both for MCP clients.
 
 `NetworkMonitor` and `ConsoleLogMonitor` are built on Selenium 4's Chrome DevTools Protocol (CDP) support and only work against Chrome/Edge; on Firefox their methods throw `UnsupportedOperationException`, which `NetworkTools` turns into an explanatory message rather than a failure.
+
+They also depend on the Selenium version: each release bundles CDP bindings for only a few Chrome versions (Selenium 4.51.0 covers Chrome 153–155). Against a newer Chrome they fail with `DevToolsException: You are using a no-op implementation of the CDP`, and the fix is to bump `selenium.version` in `pom.xml`. Full-page screenshots and init scripts send raw CDP commands instead and aren't affected.
 
 ## Configuration
 

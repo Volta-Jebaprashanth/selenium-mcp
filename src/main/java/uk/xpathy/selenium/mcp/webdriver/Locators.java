@@ -26,4 +26,13 @@ public class Locators {
             default -> throw new IllegalArgumentException("Unsupported locator type: " + locatorType);
         };
     }
+
+    /**
+     * Like {@link #toBy(String, String)}, but optionally narrowed to visible matches and/or the
+     * match at a zero-based {@code index}. Returns the plain locator when neither is requested.
+     */
+    public By toBy(String locatorType, String locatorValue, Integer index, boolean visibleOnly) {
+        By base = toBy(locatorType, locatorValue);
+        return index == null && !visibleOnly ? base : new FilteredBy(base, index, visibleOnly);
+    }
 }

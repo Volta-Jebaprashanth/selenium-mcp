@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
  * MCP-facing wrapper around {@link Tools} for window/tab management and sizing.
  */
 @Component
+@ToolGroup("window")
 public class WindowTools {
 
     private final Tools tools;
@@ -29,7 +30,7 @@ public class WindowTools {
                 tools.maximizeWindow();
                 return "Window maximized.";
             } catch (Exception e) {
-                return "Failed to maximize window: " + e.getMessage();
+                return "Failed to maximize window: " + ErrorMessages.of(e);
             }
         }
     }
@@ -42,7 +43,7 @@ public class WindowTools {
                 tools.minimizeWindow();
                 return "Window minimized.";
             } catch (Exception e) {
-                return "Failed to minimize window: " + e.getMessage();
+                return "Failed to minimize window: " + ErrorMessages.of(e);
             }
         }
     }
@@ -55,7 +56,7 @@ public class WindowTools {
                 tools.fullscreenWindow();
                 return "Window set to fullscreen.";
             } catch (Exception e) {
-                return "Failed to fullscreen window: " + e.getMessage();
+                return "Failed to fullscreen window: " + ErrorMessages.of(e);
             }
         }
     }
@@ -70,7 +71,7 @@ public class WindowTools {
                 tools.setWindowSize(width, height);
                 return "Window resized to " + width + "x" + height;
             } catch (Exception e) {
-                return "Failed to resize window: " + e.getMessage();
+                return "Failed to resize window: " + ErrorMessages.of(e);
             }
         }
     }
@@ -83,7 +84,7 @@ public class WindowTools {
                 Dimension size = tools.getWindowSize();
                 return size.getWidth() + "x" + size.getHeight();
             } catch (Exception e) {
-                return "Failed to get window size: " + e.getMessage();
+                return "Failed to get window size: " + ErrorMessages.of(e);
             }
         }
     }
@@ -98,7 +99,7 @@ public class WindowTools {
                 tools.setWindowPosition(x, y);
                 return "Window moved to (" + x + ", " + y + ")";
             } catch (Exception e) {
-                return "Failed to move window: " + e.getMessage();
+                return "Failed to move window: " + ErrorMessages.of(e);
             }
         }
     }
@@ -110,7 +111,7 @@ public class WindowTools {
             try {
                 return tools.getWindowHandle();
             } catch (Exception e) {
-                return "Failed to get window handle: " + e.getMessage();
+                return "Failed to get window handle: " + ErrorMessages.of(e);
             }
         }
     }
@@ -123,7 +124,7 @@ public class WindowTools {
                 Set<String> handles = tools.getWindowHandles();
                 return handles.stream().collect(Collectors.joining(", "));
             } catch (Exception e) {
-                return "Failed to get window handles: " + e.getMessage();
+                return "Failed to get window handles: " + ErrorMessages.of(e);
             }
         }
     }
@@ -137,7 +138,7 @@ public class WindowTools {
                 tools.switchToWindow(handle);
                 return "Switched to window " + handle;
             } catch (Exception e) {
-                return "Failed to switch window: " + e.getMessage();
+                return "Failed to switch window: " + ErrorMessages.of(e);
             }
         }
     }
@@ -150,7 +151,7 @@ public class WindowTools {
                 String handle = tools.openNewTab();
                 return "Opened new tab with handle " + handle;
             } catch (Exception e) {
-                return "Failed to open new tab: " + e.getMessage();
+                return "Failed to open new tab: " + ErrorMessages.of(e);
             }
         }
     }
@@ -163,7 +164,7 @@ public class WindowTools {
                 tools.closeCurrentWindow();
                 return "Closed current window.";
             } catch (Exception e) {
-                return "Failed to close window: " + e.getMessage();
+                return "Failed to close window: " + ErrorMessages.of(e);
             }
         }
     }

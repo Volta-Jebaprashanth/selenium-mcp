@@ -5,6 +5,8 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
+import java.time.Duration;
+
 /**
  * Executes arbitrary JavaScript and performs scroll operations on a single
  * {@link WebDriver} instance.
@@ -21,6 +23,25 @@ public class ScriptRunner {
 
     public Object executeScript(String script, Object... args) {
         return ((JavascriptExecutor) driver).executeScript(script, args);
+    }
+
+    /**
+     * Runs {@code script} with the session's script timeout temporarily set to {@code timeout},
+     * restoring the previous value afterwards. A returned Promise is awaited by the driver, so
+     * this is what bounds long-running {@code await} chains.
+     */
+    public Object executeScript(String script, Duration timeout, Object... args) {
+        if (timeout == null) {
+            return executeScript(script, args);
+        }
+        WebDriver.Timeouts timeouts = driver.manage().timeouts();
+        Duration previous = timeouts.getScriptTimeout();
+        timeouts.scriptTimeout(timeout);
+        try {
+            return executeScript(script, args);
+        } finally {
+            timeouts.scriptTimeout(previous);
+        }
     }
 
     public void scrollIntoView(By locator) {

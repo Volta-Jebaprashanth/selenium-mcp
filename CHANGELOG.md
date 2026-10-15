@@ -10,6 +10,20 @@ once it reaches a 1.0.0 release.
 
 ### Added
 
+- `takeScreenshot` `fullPage` option for capturing the whole scrollable page (Chrome/Edge via raw CDP, Firefox natively).
+- `executeScript` `timeoutMs` option to override the 30-second script timeout per call.
+- `addInitScript` / `removeInitScript` tools: JavaScript that runs on every page load in the current tab (Chrome/Edge).
+- Optional `index` and `visibleOnly` parameters on `click`, `sendKeys`, `getText`, `getAttribute`, `hover`, `doubleClick`, `rightClick`, `scrollIntoView`, and `takeElementScreenshot` to target the nth (visible) match.
+- Tool groups: `--selenium.mcp.tool-groups` / `--selenium.mcp.exclude-tool-groups` launch arguments to load fewer tools.
+- Opt-in headless Chrome integration test (`mvn test -Dselenium.it=true`).
+
+### Changed
+
+- Tool error messages are now the driver's own message only, without Selenium's build/system/capabilities/session diagnostics.
+- `executeScript` returns objects and arrays as JSON instead of Java `toString()` output.
+- `takeScreenshot` description now states it captures the viewport by default (it never captured the full page).
+- Selenium bumped to 4.51.0 (CDP for Chrome 153–155). Console and network capture failed on Chrome 155 with 4.46.0 (`no-op implementation of the CDP`).
+
 - MCP server exposing Selenium browser automation (Chrome/Firefox/Edge) over stdio, built with Spring Boot and Spring AI's MCP server starter.
 - Browser lifecycle & navigation, element queries, explicit waits, alerts, frames, windows/tabs, cookies, screenshots, JS execution & scrolling, mouse/keyboard actions, dropdown handling, and file upload/PDF printing tools.
 - Chrome DevTools Protocol (CDP) integration for network capture, request mocking/blocking, simulated network conditions, and console log capture (Chrome/Edge only).

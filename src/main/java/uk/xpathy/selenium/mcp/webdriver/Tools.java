@@ -7,6 +7,7 @@ import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 
@@ -21,7 +22,8 @@ import java.util.Set;
  * ({@link Navigator}, {@link ElementInteractor}, {@link ElementInspector}, {@link WaitHelper},
  * {@link AlertHandler}, {@link FrameHandler}, {@link WindowManager}, {@link CookieManager},
  * {@link ScreenshotTaker}, {@link ScriptRunner}, {@link ActionsHelper}, {@link SelectHelper},
- * {@link FileHelper}, {@link NetworkMonitor}, {@link ConsoleLogMonitor}, {@link PageSourceInspector})
+ * {@link FileHelper}, {@link NetworkMonitor}, {@link ConsoleLogMonitor}, {@link PageSourceInspector},
+ * {@link InitScriptManager})
  * act on the driver for the current session. Any of these can be swapped independently without
  * touching the others.
  * <p>
@@ -49,6 +51,7 @@ public class Tools {
     private NetworkMonitor networkMonitor;
     private ConsoleLogMonitor consoleLogMonitor;
     private PageSourceInspector pageSourceInspector;
+    private InitScriptManager initScriptManager;
 
     public Tools() {
         this(new BrowserFactory());
@@ -158,6 +161,17 @@ public class Tools {
         networkMonitor = null;
         consoleLogMonitor = null;
         pageSourceInspector = null;
+        initScriptManager = null;
+    }
+
+    // -- Locators --
+
+    /**
+     * Resolves a locator strategy and value into a {@link By}, optionally narrowed to visible matches
+     * and/or the match at a zero-based {@code index}. Pass the result to any {@code By} overload.
+     */
+    public By locator(String locatorType, String locatorValue, Integer index, boolean visibleOnly) {
+        return locators.toBy(locatorType, locatorValue, index, visibleOnly);
     }
 
     // -- Navigation --
@@ -551,6 +565,14 @@ public class Tools {
         requireScreenshotTaker().captureToFile(filePath);
     }
 
+    public String takeFullPageScreenshotBase64() {
+        return requireScreenshotTaker().captureFullPageBase64();
+    }
+
+    public void takeFullPageScreenshotToFile(String filePath) throws IOException {
+        requireScreenshotTaker().captureFullPageToFile(filePath);
+    }
+
     public String takeElementScreenshotBase64(By locator) {
         return requireScreenshotTaker().captureElementBase64(locator);
     }
@@ -571,6 +593,36 @@ public class Tools {
 
     public Object executeScript(String script, Object... args) {
         return requireScriptRunner().executeScript(script, args);
+    }
+
+    /**
+     * Executes {@code script} with a one-off script timeout (the W3C default is 30 seconds).
+     * A {@code null} timeout keeps the session's current setting.
+     */
+    public Object executeScript(String script, Duration timeout, Object... args) {
+        return requireScriptRunner().executeScript(script, timeout, args);
+    }
+
+    // -- Init scripts (Chrome/Edge only) --
+
+    public boolean isInitScriptSupported() {
+        return requireInitScriptManager().isSupported();
+    }
+
+    public String addInitScript(String source, boolean runNow) {
+        return requireInitScriptManager().add(source, runNow);
+    }
+
+    public void removeInitScript(String id) {
+        requireInitScriptManager().remove(id);
+    }
+
+    public void clearInitScripts() {
+        requireInitScriptManager().clear();
+    }
+
+    public java.util.Map<String, String> getInitScripts() {
+        return requireInitScriptManager().list();
     }
 
     public void scrollIntoView(By locator) {
@@ -821,6 +873,7 @@ public class Tools {
         this.networkMonitor = new NetworkMonitor(driver);
         this.consoleLogMonitor = new ConsoleLogMonitor(driver);
         this.pageSourceInspector = new PageSourceInspector(driver, locators);
+        this.initScriptManager = new InitScriptManager(driver);
     }
 
     private Navigator requireNavigator() {
@@ -901,5 +954,10 @@ public class Tools {
     private PageSourceInspector requirePageSourceInspector() {
         session.requireDriver();
         return pageSourceInspector;
+    }
+
+    private InitScriptManager requireInitScriptManager() {
+        session.requireDriver();
+        return initScriptManager;
     }
 }

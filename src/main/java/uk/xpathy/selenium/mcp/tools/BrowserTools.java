@@ -46,7 +46,7 @@ public class BrowserTools {
                         Boolean.TRUE.equals(headless), Boolean.TRUE.equals(incognito), windowSize, userAgent);
                 tools.openBrowser(browser, options);
             } catch (IllegalArgumentException e) {
-                return e.getMessage();
+                return ErrorMessages.of(e);
             }
             return tools.getBrowserName() + " browser opened.";
         }
@@ -68,9 +68,9 @@ public class BrowserTools {
             try {
                 tools.attachBrowser(browser, debuggerAddress);
             } catch (IllegalArgumentException | IllegalStateException e) {
-                return e.getMessage();
+                return ErrorMessages.of(e);
             } catch (WebDriverException e) {
-                return "Failed to connect to the browser: " + firstLine(e.getMessage());
+                return "Failed to connect to the browser: " + ErrorMessages.of(e);
             }
             return "Connected to " + tools.getBrowserName() + " at " + tools.getDebuggerAddress()
                     + " (current page: " + tools.getCurrentUrl() + "). closeBrowser will disconnect and leave it running.";
@@ -104,9 +104,9 @@ public class BrowserTools {
                 }
                 tools.launchDebugBrowser(browser, debugPort, userDataDir);
             } catch (IllegalArgumentException | IllegalStateException e) {
-                return e.getMessage();
+                return ErrorMessages.of(e);
             } catch (WebDriverException e) {
-                return "Failed to launch the debug browser: " + firstLine(e.getMessage());
+                return "Failed to launch the debug browser: " + ErrorMessages.of(e);
             }
             return "Launched " + tools.getBrowserName() + " with remote debugging on " + address
                     + ". Test code can attach with debuggerAddress " + address
@@ -132,13 +132,6 @@ public class BrowserTools {
         }
     }
 
-    private static String firstLine(String message) {
-        if (message == null) {
-            return "unknown error";
-        }
-        int newline = message.indexOf('\n');
-        return newline < 0 ? message : message.substring(0, newline);
-    }
 
     @McpTool(description = "Navigate the currently open browser to the given URL.")
     public String navigate(
@@ -221,16 +214,18 @@ public class BrowserTools {
             @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true)
             String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true)
-            String locatorValue) {
+            String locatorValue,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) {
                 return "No browser is open. Call openBrowser first.";
             }
             try {
-                tools.click(locatorType, locatorValue);
+                tools.click(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Clicked element located by " + locatorType + "=" + locatorValue;
             } catch (Exception e) {
-                return "Failed to click element: " + e.getMessage();
+                return "Failed to click element: " + ErrorMessages.of(e);
             }
         }
     }
@@ -244,16 +239,18 @@ public class BrowserTools {
             @McpToolParam(description = "The text to type into the element", required = true)
             String text,
             @McpToolParam(description = "If true, clears the element's existing content before typing. Defaults to false.", required = false)
-            Boolean clearFirst) {
+            Boolean clearFirst,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) {
                 return "No browser is open. Call openBrowser first.";
             }
             try {
-                tools.sendKeys(locatorType, locatorValue, text, Boolean.TRUE.equals(clearFirst));
+                tools.sendKeys(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), text, Boolean.TRUE.equals(clearFirst));
                 return "Sent keys to element located by " + locatorType + "=" + locatorValue;
             } catch (Exception e) {
-                return "Failed to send keys: " + e.getMessage();
+                return "Failed to send keys: " + ErrorMessages.of(e);
             }
         }
     }

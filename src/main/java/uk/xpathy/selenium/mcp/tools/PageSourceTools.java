@@ -10,6 +10,7 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
  * page, as alternatives to the full HTML returned by {@code BrowserTools#getPageSource()}.
  */
 @Component
+@ToolGroup("page-source")
 public class PageSourceTools {
 
     private static final String LOCATOR_TYPE_DESC =
@@ -35,7 +36,7 @@ public class PageSourceTools {
             try {
                 return tools.getPageScripts();
             } catch (Exception e) {
-                return "Failed to get page scripts: " + e.getMessage();
+                return "Failed to get page scripts: " + ErrorMessages.of(e);
             }
         }
     }
@@ -49,7 +50,7 @@ public class PageSourceTools {
             try {
                 return tools.getPageStyles();
             } catch (Exception e) {
-                return "Failed to get page styles: " + e.getMessage();
+                return "Failed to get page styles: " + ErrorMessages.of(e);
             }
         }
     }
@@ -69,7 +70,7 @@ public class PageSourceTools {
             try {
                 return tools.getPageElements(maxDepth == null ? DEFAULT_MAX_DEPTH : maxDepth);
             } catch (Exception e) {
-                return "Failed to get page elements: " + e.getMessage();
+                return "Failed to get page elements: " + ErrorMessages.of(e);
             }
         }
     }
@@ -122,7 +123,7 @@ public class PageSourceTools {
                         Boolean.TRUE.equals(includeSiblings), maxDepth == null ? DEFAULT_MAX_DEPTH : maxDepth,
                         limit == null ? DEFAULT_LIMIT : limit);
             } catch (Exception e) {
-                return "Failed to get filtered page elements: " + e.getMessage();
+                return "Failed to get filtered page elements: " + ErrorMessages.of(e);
             }
         }
     }
