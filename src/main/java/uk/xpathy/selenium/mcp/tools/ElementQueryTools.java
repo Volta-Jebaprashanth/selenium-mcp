@@ -14,6 +14,7 @@ import java.util.List;
  * visibility/state, geometry, existence). No method here changes page state.
  */
 @Component
+@ToolGroup("elements")
 public class ElementQueryTools {
 
     private static final String LOCATOR_TYPE_DESC =
@@ -28,13 +29,15 @@ public class ElementQueryTools {
     @McpTool(description = "Get the visible text of an element.")
     public String getText(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
-            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
+            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
-                return tools.getText(locatorType, locatorValue);
+                return tools.getText(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
             } catch (Exception e) {
-                return "Failed to get text: " + e.getMessage();
+                return "Failed to get text: " + ErrorMessages.of(e);
             }
         }
     }
@@ -43,14 +46,16 @@ public class ElementQueryTools {
     public String getAttribute(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
-            @McpToolParam(description = "The attribute name to read, e.g. href, value, class", required = true) String attributeName) {
+            @McpToolParam(description = "The attribute name to read, e.g. href, value, class", required = true) String attributeName,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
-                String value = tools.getAttribute(locatorType, locatorValue, attributeName);
+                String value = tools.getAttribute(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), attributeName);
                 return value == null ? "(null)" : value;
             } catch (Exception e) {
-                return "Failed to get attribute: " + e.getMessage();
+                return "Failed to get attribute: " + ErrorMessages.of(e);
             }
         }
     }
@@ -65,7 +70,7 @@ public class ElementQueryTools {
             try {
                 return tools.getCssValue(locatorType, locatorValue, propertyName);
             } catch (Exception e) {
-                return "Failed to get CSS value: " + e.getMessage();
+                return "Failed to get CSS value: " + ErrorMessages.of(e);
             }
         }
     }
@@ -79,7 +84,7 @@ public class ElementQueryTools {
             try {
                 return tools.getTagName(locatorType, locatorValue);
             } catch (Exception e) {
-                return "Failed to get tag name: " + e.getMessage();
+                return "Failed to get tag name: " + ErrorMessages.of(e);
             }
         }
     }
@@ -93,7 +98,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.isDisplayed(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check displayed state: " + e.getMessage();
+                return "Failed to check displayed state: " + ErrorMessages.of(e);
             }
         }
     }
@@ -107,7 +112,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.isEnabled(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check enabled state: " + e.getMessage();
+                return "Failed to check enabled state: " + ErrorMessages.of(e);
             }
         }
     }
@@ -121,7 +126,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.isSelected(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check selected state: " + e.getMessage();
+                return "Failed to check selected state: " + ErrorMessages.of(e);
             }
         }
     }
@@ -136,7 +141,7 @@ public class ElementQueryTools {
                 Dimension size = tools.getElementSize(locatorType, locatorValue);
                 return size.getWidth() + "x" + size.getHeight();
             } catch (Exception e) {
-                return "Failed to get element size: " + e.getMessage();
+                return "Failed to get element size: " + ErrorMessages.of(e);
             }
         }
     }
@@ -151,7 +156,7 @@ public class ElementQueryTools {
                 Point location = tools.getElementLocation(locatorType, locatorValue);
                 return "(" + location.getX() + ", " + location.getY() + ")";
             } catch (Exception e) {
-                return "Failed to get element location: " + e.getMessage();
+                return "Failed to get element location: " + ErrorMessages.of(e);
             }
         }
     }
@@ -165,7 +170,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.elementExists(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check element existence: " + e.getMessage();
+                return "Failed to check element existence: " + ErrorMessages.of(e);
             }
         }
     }
@@ -179,7 +184,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.countElements(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to count elements: " + e.getMessage();
+                return "Failed to count elements: " + ErrorMessages.of(e);
             }
         }
     }
@@ -194,7 +199,7 @@ public class ElementQueryTools {
                 List<String> texts = tools.getElementsText(locatorType, locatorValue);
                 return String.join("\n", texts);
             } catch (Exception e) {
-                return "Failed to get elements text: " + e.getMessage();
+                return "Failed to get elements text: " + ErrorMessages.of(e);
             }
         }
     }

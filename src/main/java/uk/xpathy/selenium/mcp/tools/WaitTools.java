@@ -14,6 +14,7 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
  * XHR/fetch calls), see {@code waitForNetworkIdle} in {@link NetworkTools}.
  */
 @Component
+@ToolGroup("wait")
 public class WaitTools {
 
     private static final String LOCATOR_TYPE_DESC =
@@ -37,7 +38,7 @@ public class WaitTools {
                 tools.waitForVisible(locatorType, locatorValue, resolveTimeout(timeoutSeconds));
                 return "Element is now visible.";
             } catch (Exception e) {
-                return "Timed out waiting for element to be visible: " + e.getMessage();
+                return "Timed out waiting for element to be visible: " + ErrorMessages.of(e);
             }
         }
     }
@@ -53,7 +54,7 @@ public class WaitTools {
                 tools.waitForClickable(locatorType, locatorValue, resolveTimeout(timeoutSeconds));
                 return "Element is now clickable.";
             } catch (Exception e) {
-                return "Timed out waiting for element to be clickable: " + e.getMessage();
+                return "Timed out waiting for element to be clickable: " + ErrorMessages.of(e);
             }
         }
     }
@@ -69,7 +70,7 @@ public class WaitTools {
                 tools.waitForPresent(locatorType, locatorValue, resolveTimeout(timeoutSeconds));
                 return "Element is now present in the DOM.";
             } catch (Exception e) {
-                return "Timed out waiting for element to be present: " + e.getMessage();
+                return "Timed out waiting for element to be present: " + ErrorMessages.of(e);
             }
         }
     }
@@ -85,7 +86,7 @@ public class WaitTools {
                 tools.waitForInvisible(locatorType, locatorValue, resolveTimeout(timeoutSeconds));
                 return "Element is now invisible.";
             } catch (Exception e) {
-                return "Timed out waiting for element to be invisible: " + e.getMessage();
+                return "Timed out waiting for element to be invisible: " + ErrorMessages.of(e);
             }
         }
     }
@@ -102,7 +103,7 @@ public class WaitTools {
                 tools.waitForTextPresent(locatorType, locatorValue, text, resolveTimeout(timeoutSeconds));
                 return "Text is now present in element.";
             } catch (Exception e) {
-                return "Timed out waiting for text to appear: " + e.getMessage();
+                return "Timed out waiting for text to appear: " + ErrorMessages.of(e);
             }
         }
     }
@@ -117,7 +118,7 @@ public class WaitTools {
                 tools.waitForTitleContains(text, resolveTimeout(timeoutSeconds));
                 return "Title now contains \"" + text + "\"";
             } catch (Exception e) {
-                return "Timed out waiting for title: " + e.getMessage();
+                return "Timed out waiting for title: " + ErrorMessages.of(e);
             }
         }
     }
@@ -132,7 +133,7 @@ public class WaitTools {
                 tools.waitForUrlContains(text, resolveTimeout(timeoutSeconds));
                 return "URL now contains \"" + text + "\"";
             } catch (Exception e) {
-                return "Timed out waiting for URL: " + e.getMessage();
+                return "Timed out waiting for URL: " + ErrorMessages.of(e);
             }
         }
     }
@@ -146,7 +147,7 @@ public class WaitTools {
                 tools.waitForPageLoad(resolveTimeout(timeoutSeconds));
                 return "Page has finished loading.";
             } catch (Exception e) {
-                return "Timed out waiting for page to load: " + e.getMessage();
+                return "Timed out waiting for page to load: " + ErrorMessages.of(e);
             }
         }
     }
@@ -163,7 +164,7 @@ public class WaitTools {
                 tools.waitForJsCondition(script, resolveTimeout(timeoutSeconds));
                 return "Condition is now true.";
             } catch (Exception e) {
-                return "Timed out waiting for JavaScript condition: " + e.getMessage();
+                return "Timed out waiting for JavaScript condition: " + ErrorMessages.of(e);
             }
         }
     }
@@ -180,7 +181,7 @@ public class WaitTools {
                 tools.waitForElementCount(locatorType, locatorValue, expectedCount, resolveTimeout(timeoutSeconds));
                 return "Element count is now " + expectedCount + ".";
             } catch (Exception e) {
-                return "Timed out waiting for element count: " + e.getMessage();
+                return "Timed out waiting for element count: " + ErrorMessages.of(e);
             }
         }
     }
@@ -198,7 +199,7 @@ public class WaitTools {
                 tools.waitForAttributeToBe(locatorType, locatorValue, attribute, expectedValue, resolveTimeout(timeoutSeconds));
                 return "Attribute \"" + attribute + "\" is now \"" + expectedValue + "\".";
             } catch (Exception e) {
-                return "Timed out waiting for attribute value: " + e.getMessage();
+                return "Timed out waiting for attribute value: " + ErrorMessages.of(e);
             }
         }
     }
@@ -214,7 +215,7 @@ public class WaitTools {
                 tools.waitForNumberOfWindowsToBe(expectedCount, resolveTimeout(timeoutSeconds));
                 return "Number of windows is now " + expectedCount + ".";
             } catch (Exception e) {
-                return "Timed out waiting for window count: " + e.getMessage();
+                return "Timed out waiting for window count: " + ErrorMessages.of(e);
             }
         }
     }

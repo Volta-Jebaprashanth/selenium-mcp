@@ -9,6 +9,7 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
  * MCP-facing wrapper around {@link Tools} for switching focus between frames/iframes.
  */
 @Component
+@ToolGroup("frames")
 public class FrameTools {
 
     private final Tools tools;
@@ -26,7 +27,7 @@ public class FrameTools {
                 tools.switchToFrameByIndex(index);
                 return "Switched to frame at index " + index;
             } catch (Exception e) {
-                return "Failed to switch frame: " + e.getMessage();
+                return "Failed to switch frame: " + ErrorMessages.of(e);
             }
         }
     }
@@ -40,7 +41,7 @@ public class FrameTools {
                 tools.switchToFrameByNameOrId(nameOrId);
                 return "Switched to frame " + nameOrId;
             } catch (Exception e) {
-                return "Failed to switch frame: " + e.getMessage();
+                return "Failed to switch frame: " + ErrorMessages.of(e);
             }
         }
     }
@@ -55,7 +56,7 @@ public class FrameTools {
                 tools.switchToFrame(locatorType, locatorValue);
                 return "Switched to frame located by " + locatorType + "=" + locatorValue;
             } catch (Exception e) {
-                return "Failed to switch frame: " + e.getMessage();
+                return "Failed to switch frame: " + ErrorMessages.of(e);
             }
         }
     }
@@ -68,7 +69,7 @@ public class FrameTools {
                 tools.switchToDefaultContent();
                 return "Switched to default content.";
             } catch (Exception e) {
-                return "Failed to switch to default content: " + e.getMessage();
+                return "Failed to switch to default content: " + ErrorMessages.of(e);
             }
         }
     }
@@ -81,7 +82,7 @@ public class FrameTools {
                 tools.switchToParentFrame();
                 return "Switched to parent frame.";
             } catch (Exception e) {
-                return "Failed to switch to parent frame: " + e.getMessage();
+                return "Failed to switch to parent frame: " + ErrorMessages.of(e);
             }
         }
     }

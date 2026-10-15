@@ -10,6 +10,7 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
  * right-click, drag and drop) and single key presses, via Selenium's Actions API.
  */
 @Component
+@ToolGroup("actions")
 public class ActionsTools {
 
     private static final String LOCATOR_TYPE_DESC =
@@ -24,14 +25,16 @@ public class ActionsTools {
     @McpTool(description = "Move the mouse over an element (hover), e.g. to reveal a dropdown menu.")
     public String hover(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
-            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
+            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
-                tools.hover(locatorType, locatorValue);
+                tools.hover(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Hovered over element.";
             } catch (Exception e) {
-                return "Failed to hover: " + e.getMessage();
+                return "Failed to hover: " + ErrorMessages.of(e);
             }
         }
     }
@@ -39,14 +42,16 @@ public class ActionsTools {
     @McpTool(description = "Double-click the element identified by the given locator in the open browser. Use for controls that react to dblclick, such as editable cells or list items that open on double-click.")
     public String doubleClick(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
-            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
+            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
-                tools.doubleClick(locatorType, locatorValue);
+                tools.doubleClick(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Double-clicked element.";
             } catch (Exception e) {
-                return "Failed to double-click: " + e.getMessage();
+                return "Failed to double-click: " + ErrorMessages.of(e);
             }
         }
     }
@@ -54,14 +59,16 @@ public class ActionsTools {
     @McpTool(description = "Right-click (context click) an element.")
     public String rightClick(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
-            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
+            @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
-                tools.rightClick(locatorType, locatorValue);
+                tools.rightClick(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Right-clicked element.";
             } catch (Exception e) {
-                return "Failed to right-click: " + e.getMessage();
+                return "Failed to right-click: " + ErrorMessages.of(e);
             }
         }
     }
@@ -76,7 +83,7 @@ public class ActionsTools {
                 tools.clickAndHold(locatorType, locatorValue);
                 return "Clicked and held element.";
             } catch (Exception e) {
-                return "Failed to click and hold: " + e.getMessage();
+                return "Failed to click and hold: " + ErrorMessages.of(e);
             }
         }
     }
@@ -89,7 +96,7 @@ public class ActionsTools {
                 tools.release();
                 return "Released mouse button.";
             } catch (Exception e) {
-                return "Failed to release: " + e.getMessage();
+                return "Failed to release: " + ErrorMessages.of(e);
             }
         }
     }
@@ -106,7 +113,7 @@ public class ActionsTools {
                 tools.dragAndDrop(sourceLocatorType, sourceLocatorValue, targetLocatorType, targetLocatorValue);
                 return "Dragged element to target.";
             } catch (Exception e) {
-                return "Failed to drag and drop: " + e.getMessage();
+                return "Failed to drag and drop: " + ErrorMessages.of(e);
             }
         }
     }
@@ -123,7 +130,7 @@ public class ActionsTools {
                 tools.dragAndDropByOffset(locatorType, locatorValue, xOffset, yOffset);
                 return "Dragged element by offset (" + xOffset + ", " + yOffset + ")";
             } catch (Exception e) {
-                return "Failed to drag by offset: " + e.getMessage();
+                return "Failed to drag by offset: " + ErrorMessages.of(e);
             }
         }
     }
@@ -137,7 +144,7 @@ public class ActionsTools {
                 tools.pressKey(keyName);
                 return "Pressed key " + keyName;
             } catch (Exception e) {
-                return "Failed to press key: " + e.getMessage();
+                return "Failed to press key: " + ErrorMessages.of(e);
             }
         }
     }

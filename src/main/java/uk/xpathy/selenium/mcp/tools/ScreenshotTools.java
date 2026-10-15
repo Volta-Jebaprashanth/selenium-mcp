@@ -10,6 +10,7 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
  * given, the image is saved to disk; otherwise it is returned inline as base64 PNG.
  */
 @Component
+@ToolGroup("screenshots")
 public class ScreenshotTools {
 
     private final Tools tools;
@@ -18,20 +19,32 @@ public class ScreenshotTools {
         this.tools = tools;
     }
 
-    @McpTool(description = "Take a screenshot of the full current page. Saves to filePath if given, otherwise returns the image as base64 PNG.")
+    @McpTool(description = "Take a screenshot of the current page. By default captures only the visible viewport; "
+            + "set fullPage=true to capture the whole scrollable page (Chrome, Edge, Firefox). Content that scrolls "
+            + "inside its own container (not the page) is only captured as far as it is visible. "
+            + "Saves to filePath if given, otherwise returns the image as base64 PNG.")
     public String takeScreenshot(
             @McpToolParam(description = "Absolute file path to save the PNG to. If omitted, the image is returned as base64.", required = false)
-            String filePath) {
+            String filePath,
+            @McpToolParam(description = "Capture the entire scrollable page instead of just the viewport. Defaults to false.", required = false)
+            Boolean fullPage) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
+            boolean full = Boolean.TRUE.equals(fullPage);
             try {
                 if (filePath == null || filePath.isBlank()) {
-                    return tools.takeScreenshotBase64();
+                    return full ? tools.takeFullPageScreenshotBase64() : tools.takeScreenshotBase64();
+                }
+                if (full) {
+                    tools.takeFullPageScreenshotToFile(filePath);
+                    return "Full-page screenshot saved to " + filePath;
                 }
                 tools.takeScreenshotToFile(filePath);
-                return "Screenshot saved to " + filePath;
+                return "Viewport screenshot saved to " + filePath;
+            } catch (UnsupportedOperationException e) {
+                return ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to take screenshot: " + e.getMessage();
+                return "Failed to take screenshot: " + ErrorMessages.of(e);
             }
         }
     }
@@ -43,17 +56,19 @@ public class ScreenshotTools {
             @McpToolParam(description = "The locator value to find the element", required = true)
             String locatorValue,
             @McpToolParam(description = "Absolute file path to save the PNG to. If omitted, the image is returned as base64.", required = false)
-            String filePath) {
+            String filePath,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (tools) {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 if (filePath == null || filePath.isBlank()) {
-                    return tools.takeElementScreenshotBase64(locatorType, locatorValue);
+                    return tools.takeElementScreenshotBase64(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 }
-                tools.takeElementScreenshotToFile(locatorType, locatorValue, filePath);
+                tools.takeElementScreenshotToFile(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), filePath);
                 return "Element screenshot saved to " + filePath;
             } catch (Exception e) {
-                return "Failed to take element screenshot: " + e.getMessage();
+                return "Failed to take element screenshot: " + ErrorMessages.of(e);
             }
         }
     }
