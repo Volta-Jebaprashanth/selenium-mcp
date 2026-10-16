@@ -204,7 +204,8 @@ jobs:
             fi
           }
 
-          for tarball in tarballs/*.tgz; do
+          # The ./ prefix matters: npm reads a bare "dir/file.tgz" as GitHub "user/repo" shorthand.
+          for tarball in ./tarballs/*.tgz; do
             name=$(tar -xzOf "$tarball" package/package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).name")
             publish "$name" "$tarball"
           done
