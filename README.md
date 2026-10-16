@@ -35,10 +35,64 @@ Beyond element discovery, it's a full Selenium automation surface for writing an
 
 It also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — passive network capture, request mocking/blocking, simulated network conditions, and browser console log capture, useful for diagnosing flaky waits — plus a standalone REST client for API automation, so a test automation engineer can get AI help combining REST Assured-style API checks with Selenium UI flows in one test, in one workflow. See [Network capture, mocking & console logs](#network-capture-mocking--console-logs-networktools--chromeedge-only) and [REST API automation](#rest-api-automation-apitools) below.
 
+## Quick start (no Java install needed)
+
+Paste this into your MCP client's config. The npm package bundles its own Java runtime, so all you need is [Node.js](https://nodejs.org) (for `npx`) and a browser.
+
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_selenium--mcp-0098FF?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=selenium-mcp&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40xpathy%2Fselenium-mcp%22%5D%7D)
+[![Add to Cursor](https://img.shields.io/badge/Cursor-Add_selenium--mcp-000000?logo=cursor&logoColor=white)](https://cursor.com/en/install-mcp?name=selenium-mcp&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkB4cGF0aHkvc2VsZW5pdW0tbWNwIl19)
+
+**Claude Code** (`.mcp.json`), **Cursor**, **Claude Desktop** — macOS / Linux:
+
+```json
+{
+  "mcpServers": {
+    "selenium-mcp": {
+      "command": "npx",
+      "args": ["-y", "@xpathy/selenium-mcp"]
+    }
+  }
+}
+```
+
+Windows (Claude Code needs `npx` wrapped in `cmd /c` there):
+
+```json
+{
+  "mcpServers": {
+    "selenium-mcp": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@xpathy/selenium-mcp"]
+    }
+  }
+}
+```
+
+**VS Code** (`.vscode/mcp.json`) — note VS Code's top-level key is `servers`:
+
+```json
+{
+  "servers": {
+    "selenium-mcp": {
+      "command": "npx",
+      "args": ["-y", "@xpathy/selenium-mcp"]
+    }
+  }
+}
+```
+
+Or, for Claude Code, from a terminal: `claude mcp add selenium-mcp -- npx -y @xpathy/selenium-mcp`
+
+The first start downloads about 90 MB (the Java runtime for your OS plus the server). If your client times out on that first start, restart the server once — or pre-download it with `npx -y @xpathy/selenium-mcp --version`. Supported platforms: Windows x64, Linux x64 (glibc), macOS Intel, macOS Apple Silicon. Logs go to `~/.selenium-mcp/mcp-server.log`. Any extra arguments (e.g. [`--selenium.mcp.exclude-tool-groups=...`](#loading-fewer-tools)) are passed through to the server.
+
+Prefer running the jar on your own Java? Read on.
+
 ## Prerequisites
 
+For running the jar directly or building from source:
+
 - Java 21+ (`JAVA_HOME` pointing at a JDK 21 install)
-- Maven 3.9+
+- Maven 3.9+ (building from source only)
 - Chrome, Firefox, or Edge installed locally (drivers are fetched automatically by [WebDriverManager](https://github.com/bonigarcia/webdrivermanager) on first use). Network capture/mocking/blocking and console log capture require Chrome or Edge — they're backed by the Chrome DevTools Protocol, which Firefox doesn't expose.
 
 ## Get the jar
@@ -335,7 +389,11 @@ See [application.properties](src/main/resources/application.properties). Notably
 
 ## Logging
 
-Logs go to `mcp-server.log` (rotated), not the console — console output is reserved for the MCP stdio protocol.
+Logs go to `mcp-server.log` (rotated), not the console — console output is reserved for the MCP stdio protocol. When run through the npm package, the log is at `~/.selenium-mcp/mcp-server.log`; when running the jar directly, it's written to the working directory unless you pass `--logging.file.name=/path/to/mcp-server.log`.
+
+## npm distribution
+
+The [`npm/`](npm/) directory holds the `@xpathy/selenium-mcp` package behind the [Quick start](#quick-start-no-java-install-needed). On every push to `main`, CI builds a trimmed Java 21 runtime with `jlink` on Windows x64, Linux x64, macOS Intel and macOS Apple Silicon, packs each with the jar into a platform package (`@xpathy/selenium-mcp-<platform>-<arch>`), smoke-tests it over MCP stdio, and publishes it. The `@xpathy/selenium-mcp` launcher lists the platform packages as `optionalDependencies`, so npm installs only the one matching the user's machine, and starts the jar on that runtime.
 
 ## For AI coding agents
 
