@@ -23,10 +23,10 @@ jobs:
       version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -46,7 +46,7 @@ jobs:
           echo "version=${BASE_VERSION}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
 
       - name: Upload jar artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: selenium-mcp-jar
           path: target/*.jar
@@ -75,21 +75,21 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Download jar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: selenium-mcp-jar
           path: pkg
@@ -127,7 +127,7 @@ jobs:
           node npm/scripts/smoke-test.js node launcher-test/node_modules/@xpathy/selenium-mcp/bin/selenium-mcp.js
 
       - name: Upload npm package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-${{ matrix.target }}
           path: tarballs/*.tgz
@@ -144,70 +144,94 @@ jobs:
       contents: write
     steps:
       - name: Download jar artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: selenium-mcp-jar
           path: dist
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.build.outputs.version }}
           name: v${{ needs.build.outputs.version }}
           generate_release_notes: true
           files: dist/**/*.jar
 
-  # Publishes the platform packages first and the launcher last, so the launcher never
-  # points at runtimes that aren't on the registry yet. Already-published versions are
-  # skipped, so a failed run can simply be re-run. Skipped entirely until the NPM_TOKEN
-  # repository secret exists.
+  # Publishes the platform packages first and the launcher last, and waits until the
+  # registry actually serves each platform version before publishing the launcher: npm
+  # processes large uploads asynchronously (the first publish took ~10 minutes), and an
+  # `npx` that resolves the launcher before its runtime is servable caches an install
+  # without one. Already-published versions are skipped, so a failed run can be re-run.
+  #
+  # Authenticates with npm trusted publishing (GitHub OIDC; needs npm >= 11.5.1 and the
+  # id-token permission). The NPM_TOKEN secret is only a fallback until trusted publishing
+  # is configured on npmjs.com for every @xpathy package; delete the secret afterwards.
   publish-npm:
     needs: [build, bundle, release]
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # npm provenance
+      id-token: write # trusted publishing + provenance
     env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       VERSION: ${{ needs.build.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download npm packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: npm-*
           path: tarballs
           merge-multiple: true
 
+      - name: Update npm for trusted publishing
+        run: npm install -g npm@^11.5.1 && npm --version
+
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ -z "$NPM_TOKEN" ]; then
-            echo "::notice::NPM_TOKEN secret not set - skipping npm publish."
-            exit 0
-          fi
+          is_live() { # <name> - true once the registry serves <name>@$VERSION
+            npm view "$1@$VERSION" version --prefer-online >/dev/null 2>&1
+          }
 
           publish() { # <name> <path-or-tarball>
-            if npm view "$1@$VERSION" version >/dev/null 2>&1; then
+            if is_live "$1"; then
               echo "$1@$VERSION already published - skipping"
             else
               npm publish "$2" --access public --provenance
             fi
           }
 
+          wait_until_live() { # <name>
+            for _ in $(seq 1 90); do
+              if is_live "$1"; then
+                echo "$1@$VERSION is live"
+                return 0
+              fi
+              sleep 20
+            done
+            echo "::error::$1@$VERSION still not served by the registry after 30 minutes - not publishing the launcher. Re-run this job once it is."
+            return 1
+          }
+
           # The ./ prefix matters: npm reads a bare "dir/file.tgz" as GitHub "user/repo" shorthand.
+          platform_packages=()
           for tarball in ./tarballs/*.tgz; do
             name=$(tar -xzOf "$tarball" package/package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).name")
             publish "$name" "$tarball"
+            platform_packages+=("$name")
+          done
+
+          for name in "${platform_packages[@]}"; do
+            wait_until_live "$name"
           done
 
           node npm/scripts/set-version.js "$VERSION"

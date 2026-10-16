@@ -10,7 +10,7 @@ once it reaches a 1.0.0 release.
 
 ### Added
 
-- npm distribution with a bundled Java runtime: `npx -y @xpathy/selenium-mcp`, no JDK install needed (Windows x64, Linux x64, macOS Intel/Apple Silicon). See the README's Quick start.
+- npm distribution with a bundled Java runtime: `npx -y @xpathy/selenium-mcp`, no JDK install needed (Windows x64, Linux x64, macOS Intel/Apple Silicon). See the README's Quick start. The launcher repairs an npx cache that's missing its platform package, and releases are published via npm trusted publishing.
 - `takeScreenshot` `fullPage` option for capturing the whole scrollable page (Chrome/Edge via raw CDP, Firefox natively).
 - `executeScript` `timeoutMs` option to override the 30-second script timeout per call.
 - `addInitScript` / `removeInitScript` tools: JavaScript that runs on every page load in the current tab (Chrome/Edge).

@@ -4,22 +4,59 @@
 // so this script must never write to it - diagnostics go to stderr only.
 'use strict';
 
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const platformPackage = `@xpathy/selenium-mcp-${process.platform}-${process.arch}`;
+const { version } = require('../package.json');
+const SUPPORTED = ['win32-x64', 'linux-x64', 'darwin-x64', 'darwin-arm64'];
+const target = `${process.platform}-${process.arch}`;
+const platformPackage = `@xpathy/selenium-mcp-${target}`;
 
-let packageDir;
-try {
-  packageDir = path.dirname(require.resolve(`${platformPackage}/package.json`));
-} catch {
+function resolvePlatformPackage() {
+  try {
+    return path.dirname(require.resolve(`${platformPackage}/package.json`));
+  } catch {
+    return null;
+  }
+}
+
+// npm skips an optionalDependency it can't fetch (e.g. a run that raced a release
+// still being processed by the registry), and npx then reuses that incomplete install
+// from its cache on every later run. When we're running from the npx cache, install
+// the missing platform package into it so the next start doesn't hit this again.
+function repairNpxInstall() {
+  const npxInstallDir = path.resolve(__dirname, '..', '..', '..', '..');
+  const npmCli = process.env.npm_execpath;
+  if (path.basename(path.dirname(npxInstallDir)) !== '_npx' || !npmCli || !/npm-cli\.js$/.test(npmCli)) {
+    return null;
+  }
+  process.stderr.write(`selenium-mcp: ${platformPackage} is missing from the npx cache - installing it...\n`);
+  const result = spawnSync(
+    process.execPath,
+    [npmCli, 'install', '--no-save', '--no-audit', '--no-fund', `${platformPackage}@${version}`],
+    // npm's own output goes to stderr (fd 2): stdout belongs to the MCP client.
+    { cwd: npxInstallDir, stdio: ['ignore', 2, 2] }
+  );
+  return result.status === 0 ? resolvePlatformPackage() : null;
+}
+
+let packageDir = resolvePlatformPackage();
+if (!packageDir && SUPPORTED.includes(target)) {
+  packageDir = repairNpxInstall();
+}
+if (!packageDir) {
+  const npxInstallDir = path.resolve(__dirname, '..', '..', '..', '..');
   process.stderr.write(
-    `selenium-mcp: no bundled Java runtime for ${process.platform}-${process.arch} ` +
-      `(${platformPackage} is not installed).\n` +
-      'Supported: win32-x64, linux-x64, darwin-x64, darwin-arm64. On other platforms, install Java 21+ ' +
-      'and run the jar from https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest\n'
+    SUPPORTED.includes(target)
+      ? `selenium-mcp: ${platformPackage}@${version} is not installed, and installing it failed.\n` +
+          (path.basename(path.dirname(npxInstallDir)) === '_npx'
+            ? `Delete ${npxInstallDir} and restart the server so npx reinstalls it.\n`
+            : `Reinstall @xpathy/selenium-mcp without --omit=optional / --no-optional.\n`)
+      : `selenium-mcp: no bundled Java runtime for ${target}. Supported: ${SUPPORTED.join(', ')}.\n` +
+          'On other platforms, install Java 21+ and run the jar from ' +
+          'https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest\n'
   );
   process.exit(1);
 }
@@ -45,7 +82,6 @@ const args = process.argv.slice(2);
 if (args[0] === '--version') {
   // Terminal-only convenience (an MCP client never passes it): lets users pre-download
   // the package with `npx -y @xpathy/selenium-mcp --version` before the first real start.
-  const { version } = require('../package.json');
   process.stdout.write(`@xpathy/selenium-mcp ${version} (${platformPackage})\n`);
   process.exit(0);
 }
