@@ -9,9 +9,18 @@ on:
 permissions:
   contents: read
 
+env:
+  # JDK modules the server jar needs (from `jdeps --print-module-deps` over the fat jar),
+  # plus jdk.crypto.cryptoki, jdk.zipfs and jdk.charsets as headroom for TLS, zip and
+  # charset lookups that jdeps can't see. If a dependency bump needs another module, the
+  # smoke tests in the bundle job fail - add it here.
+  JLINK_MODULES: java.base,java.compiler,java.desktop,java.instrument,java.naming,java.net.http,java.prefs,java.scripting,java.security.jgss,java.sql,jdk.jfr,jdk.management,jdk.net,jdk.unsupported,jdk.crypto.cryptoki,jdk.zipfs,jdk.charsets
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,6 +38,13 @@ jobs:
       - name: Test
         run: mvn -B test
 
+      - name: Determine release version
+        id: version
+        run: |
+          RAW_VERSION=$(mvn -q -B help:evaluate -Dexpression=project.version -DforceStdout)
+          BASE_VERSION=${RAW_VERSION%-SNAPSHOT}
+          echo "version=${BASE_VERSION}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
       - name: Upload jar artifact
         uses: actions/upload-artifact@v4
         with:
@@ -36,15 +52,27 @@ jobs:
           path: target/*.jar
           if-no-files-found: error
 
-  release:
+  # Builds a trimmed Java runtime per OS/CPU and packs it with the jar into the
+  # @xpathy/selenium-mcp-<platform>-<arch> npm package. Runs on pull requests too, so a
+  # change that breaks the bundled runtime is caught before it reaches main.
+  bundle:
     needs: build
-    if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      !contains(github.event.head_commit.message, '[skip release]')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            target: win32-x64
+          - runner: ubuntu-latest
+            target: linux-x64
+          - runner: macos-15-intel
+            target: darwin-x64
+          - runner: macos-latest
+            target: darwin-arm64
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,15 +82,67 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'maven'
 
-      - name: Determine release tag
-        id: version
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Download jar artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: selenium-mcp-jar
+          path: pkg
+
+      - name: Build runtime with jlink
         run: |
-          RAW_VERSION=$(mvn -q -B help:evaluate -Dexpression=project.version -DforceStdout)
-          BASE_VERSION=${RAW_VERSION%-SNAPSHOT}
-          echo "tag=v${BASE_VERSION}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          "$JAVA_HOME/bin/jlink" \
+            --add-modules "$JLINK_MODULES" \
+            --strip-debug --no-man-pages --no-header-files --compress=zip-6 \
+            --output pkg/runtime
 
+      - name: Create platform package
+        run: |
+          node npm/scripts/make-platform-package.js "${{ needs.build.outputs.version }}" pkg
+          node -e "const p=require('./pkg/package.json'); if (!p.name.endsWith('${{ matrix.target }}')) { console.error('Built ' + p.name + ' on a ${{ matrix.target }} runner'); process.exit(1); }"
+
+      - name: Smoke test the bundled runtime
+        run: node npm/scripts/smoke-test.js pkg/runtime/bin/java -jar pkg/selenium-mcp.jar
+
+      - name: Pack
+        run: |
+          mkdir -p tarballs
+          (cd pkg && npm pack --pack-destination ../tarballs)
+          ls -la tarballs
+
+      - name: Smoke test the launcher against the packed package
+        run: |
+          # Lay the packages out the way npm installs them, then start the server through
+          # the launcher - this exercises the packed files, not the build directory.
+          mkdir -p launcher-test/node_modules/@xpathy
+          cp -r npm/selenium-mcp "launcher-test/node_modules/@xpathy/selenium-mcp"
+          tar -xzf tarballs/*.tgz -C launcher-test
+          mv launcher-test/package "launcher-test/node_modules/@xpathy/selenium-mcp-${{ matrix.target }}"
+          node launcher-test/node_modules/@xpathy/selenium-mcp/bin/selenium-mcp.js --version
+          node npm/scripts/smoke-test.js node launcher-test/node_modules/@xpathy/selenium-mcp/bin/selenium-mcp.js
+
+      - name: Upload npm package
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-${{ matrix.target }}
+          path: tarballs/*.tgz
+          if-no-files-found: error
+
+  release:
+    needs: [build, bundle]
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      !contains(github.event.head_commit.message, '[skip release]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
       - name: Download jar artifact
         uses: actions/download-artifact@v4
         with:
@@ -72,7 +152,62 @@ jobs:
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.tag }}
+          tag_name: v${{ needs.build.outputs.version }}
+          name: v${{ needs.build.outputs.version }}
           generate_release_notes: true
           files: dist/**/*.jar
+
+  # Publishes the platform packages first and the launcher last, so the launcher never
+  # points at runtimes that aren't on the registry yet. Already-published versions are
+  # skipped, so a failed run can simply be re-run. Skipped entirely until the NPM_TOKEN
+  # repository secret exists.
+  publish-npm:
+    needs: [build, bundle, release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm provenance
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      VERSION: ${{ needs.build.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download npm packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: npm-*
+          path: tarballs
+          merge-multiple: true
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::notice::NPM_TOKEN secret not set - skipping npm publish."
+            exit 0
+          fi
+
+          publish() { # <name> <path-or-tarball>
+            if npm view "$1@$VERSION" version >/dev/null 2>&1; then
+              echo "$1@$VERSION already published - skipping"
+            else
+              npm publish "$2" --access public --provenance
+            fi
+          }
+
+          for tarball in tarballs/*.tgz; do
+            name=$(tar -xzOf "$tarball" package/package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).name")
+            publish "$name" "$tarball"
+          done
+
+          node npm/scripts/set-version.js "$VERSION"
+          publish "@xpathy/selenium-mcp" ./npm/selenium-mcp
