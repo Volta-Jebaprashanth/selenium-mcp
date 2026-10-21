@@ -1,6 +1,6 @@
 # selenium-mcp
 
-### The Java-based Selenium MCP server built for test automation engineers, with Playwright-MCP-style smart element discovery
+## The Java-based Selenium MCP server built for test automation engineers, with Playwright-MCP-style smart element discovery
 
 [![CI](https://github.com/Volta-Jebaprashanth/selenium-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Volta-Jebaprashanth/selenium-mcp/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/Volta-Jebaprashanth/selenium-mcp)](https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest)
@@ -22,7 +22,7 @@ Every test automation engineer who's tried pairing an AI coding assistant with a
 `PageSourceTools` gives an agent focused, JSON-shaped views of the page instead of raw markup — scripts only, styles only, a compact element tree — and, most powerfully, `getPageElementsFiltered`: it finds *every* element matching a locator in one call and hands back the exact ancestor chain and sibling position (`div.container > form#login > input:nth-of-type(2)`) needed to write a locator that's unique on the first try, no more trial-and-error against the live page. See [Page inspection](#page-inspection-pagesourcetools--the-flagship-feature) below.
 
 | | selenium-mcp | Other Selenium MCP servers | Playwright MCP |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Language / stack | Java (Spring Boot) | mostly Node.js / Python | Node.js |
 | Browser engine | Selenium WebDriver (Chrome, Firefox, Edge) | Selenium WebDriver | Playwright (Chromium, Firefox, WebKit) |
 | Structured element discovery (no raw HTML dump) | ✅ filtered queries with ancestor/sibling context | ❌ raw `getPageSource` only | ✅ accessibility-tree snapshot |
@@ -155,7 +155,7 @@ Errors come back as the driver's one-line message (e.g. `Script error: javascrip
 ### Browser lifecycle & navigation (`BrowserTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `openBrowser` | Opens a browser window (`chrome`, `firefox`, or `edge`; defaults to `chrome`), with optional `headless`, `incognito`, `windowSize` (e.g. `1920x1080`), and `userAgent`. Reuses an already-open browser. |
 | `connectToBrowser` | Connects to a Chrome/Edge that is already running with remote debugging (`--remote-debugging-port=<port>` plus a separate `--user-data-dir`), via `debuggerAddress` (defaults to `127.0.0.1:9222`). |
 | `launchDebugBrowser` | Launches Chrome/Edge with remote debugging on `port` (default `9222`) and connects to it. The browser keeps running after `closeBrowser`, so test code can attach to the same browser with `ChromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9222")`. Useful for letting an agent inspect the live page where a test failed. If something is already listening on the port, connects to it instead. |
@@ -173,7 +173,7 @@ Errors come back as the driver's one-line message (e.g. `Script error: javascrip
 Token-efficient, JSON-shaped alternatives to the raw HTML from `getPageSource` — read only what you actually need instead of parsing the whole page, and never guess at a locator again. This is the capability described in [The problem this solves](#the-problem-this-solves) above, and what sets `selenium-mcp` apart from other Selenium MCP servers.
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `getPageScripts` | Every `<script>` on the page as a JSON array — `src` for external scripts, `content` for inline ones (truncated over 10,000 characters). No markup, no styles, no noise. |
 | `getPageStyles` | Every stylesheet as a JSON array — `href` for external `<link rel="stylesheet">`s, `content` for inline `<style>` tags (same truncation). |
 | `getPageElements` | The entire page as a compact JSON tree rooted at `<body>` — tag, notable attributes, each element's own text, and children — with `<script>`/`<style>`/comments stripped out entirely. Far cheaper for an agent to read than raw HTML. Depth-capped via `maxDepth` (default 20). |
@@ -184,7 +184,7 @@ Example: `locatorType=xpath`, `locatorValue=//input`, `includeAncestors=true` re
 ### Element queries (`ElementQueryTools`) — read-only
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `getText` | Visible text of an element. |
 | `getAttribute` | Value of an HTML attribute/DOM property. |
 | `getCssValue` | Computed CSS property value. |
@@ -198,7 +198,7 @@ Example: `locatorType=xpath`, `locatorValue=//input`, `includeAncestors=true` re
 ### Waits (`WaitTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `waitForVisible` / `waitForClickable` / `waitForPresent` / `waitForInvisible` | Explicit waits on an element, with configurable timeout (default 10s). |
 | `waitForTextPresent` | Waits until an element contains given text. |
 | `waitForTitleContains` / `waitForUrlContains` | Waits on page title / URL. |
@@ -213,7 +213,7 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 ### Alerts (`AlertTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `acceptAlert` / `dismissAlert` | Accept or dismiss a JS alert/confirm/prompt. |
 | `getAlertText` | Read the dialog's text. |
 | `sendKeysToAlert` | Type into a prompt dialog. |
@@ -222,7 +222,7 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 ### Frames (`FrameTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `switchToFrameByIndex` / `switchToFrameByNameOrId` / `switchToFrame` | Switch focus into a frame/iframe. |
 | `switchToDefaultContent` | Return focus to the main document. |
 | `switchToParentFrame` | Move focus up one frame level. |
@@ -230,7 +230,7 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 ### Windows & tabs (`WindowTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `maximizeWindow` / `minimizeWindow` / `fullscreenWindow` | Window state. |
 | `setWindowSize` / `getWindowSize` | Resize / read window size. |
 | `setWindowPosition` | Move the window on screen. |
@@ -242,7 +242,7 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 ### Cookies (`CookieTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `addCookie` | Add a cookie, optionally with domain/path. |
 | `getCookie` / `getAllCookies` | Read cookies. |
 | `deleteCookie` / `deleteAllCookies` | Remove cookies. |
@@ -250,14 +250,14 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 ### Screenshots (`ScreenshotTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `takeScreenshot` | Viewport screenshot by default; `fullPage=true` captures the whole scrollable page (Chrome/Edge via CDP, Firefox natively). Returns base64 PNG, or saves to a file path if given. Content scrolling inside its own container is only captured as far as it's visible. |
 | `takeElementScreenshot` | Screenshot of a single element. |
 
 ### JavaScript & scrolling (`ScriptTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `executeScript` | Runs JavaScript in the page context and returns the result (objects/arrays as JSON; a returned Promise is awaited). Optional `timeoutMs` overrides the 30-second script timeout for that call. |
 | `addInitScript` / `removeInitScript` | Registers JavaScript that runs at the start of every page load in the current tab (CDP `Page.addScriptToEvaluateOnNewDocument`), so helpers and hooks survive navigations and reloads. Chrome/Edge only. |
 | `scrollIntoView` | Scrolls an element into view. |
@@ -267,7 +267,7 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 ### Mouse & keyboard actions (`ActionsTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `hover` | Moves the mouse over an element. |
 | `doubleClick` / `rightClick` | Double-click / context-click an element. |
 | `clickAndHold` / `releaseClick` | Press-and-hold / release the mouse button. |
@@ -278,7 +278,7 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 ### Dropdowns (`SelectTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `selectByVisibleText` / `selectByValue` / `selectByIndex` | Select an option from a `<select>`. |
 | `deselectAllOptions` | Clear selections in a multi-select. |
 | `getSelectedOptionsText` | Read the currently selected option(s). |
@@ -287,7 +287,7 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 ### Files (`FileTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `uploadFile` | Uploads a local file via an `<input type="file">` element. |
 | `printToPdf` | Prints the current page to PDF — returns base64, or saves to a file path if given. |
 
@@ -296,7 +296,7 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 Built on Selenium 4's Chrome DevTools Protocol (CDP) support (`HasDevTools`/`NetworkInterceptor`). Not available on Firefox — every tool below returns an explanatory message instead of throwing if called on an unsupported browser.
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `startNetworkCapture` / `stopNetworkCapture` | Start/stop passively recording network traffic (method, URL, headers, bodies, status, timing), optionally filtered by a URL regex. |
 | `getNetworkLog` | Read captured entries as JSON, optionally filtered by URL regex / method, most recent last. |
 | `clearNetworkLog` | Clear captured entries without stopping capture. |
@@ -314,7 +314,7 @@ Built on Selenium 4's Chrome DevTools Protocol (CDP) support (`HasDevTools`/`Net
 A standalone HTTP client, independent of the browser session — usable whether or not a browser is open. Lets an agent exercise a backend API directly (seed/verify test data, or test a service with no UI at all) alongside browser-driven automation. Every response comes back as JSON: `{status, headers, body, durationMillis}`.
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `httpGet` / `httpDelete` | Send a GET/DELETE request with optional headers. |
 | `httpPost` / `httpPut` / `httpPatch` | Send a POST/PUT/PATCH request with a body and optional headers. |
 | `httpRequest` | Send a request with an arbitrary HTTP method (e.g. HEAD, OPTIONS). |
@@ -324,7 +324,7 @@ Headers are passed as a JSON object string, e.g. `{"Authorization": "Bearer xyz"
 ### System (`SystemTools`)
 
 | Tool | Description |
-|---|---|
+| --- | --- |
 | `getStatus` | Basic server health check. |
 
 ## Resources & prompts
@@ -334,7 +334,7 @@ Besides tools, the server exposes MCP **resources** (live browser state you can 
 ### Resources (`BrowserResources`)
 
 | URI | Content |
-|---|---|
+| --- | --- |
 | `selenium://session` | Browser, launched or attached (with debugger address), current URL and title, open alert, window count, and whether network/console capture is on. |
 | `selenium://page/elements` | The page as a compact JSON element tree, same as `getPageElements`. The cheap way to give the agent the page. |
 | `selenium://page/source` | Full page HTML. |
@@ -351,7 +351,7 @@ Console and network resources only show what was recorded after `startConsoleCap
 Every prompt tells the agent to study your existing framework first (driver setup, Page Object style, wait helpers, assertion library, test data) and extend it. The tools are used to inspect the live application, never called from the generated tests.
 
 | Prompt | Arguments | What the agent does |
-|---|---|---|
+| --- | --- | --- |
 | `generate-page-object` | `pageName`, `url`?, `scope`? | Inspects the live page and writes a Page Object in your framework's style, with every locator verified against the DOM. |
 | `write-test` | `scenario`, `url`?, `testName`? | Walks the scenario in the browser first (finding the waits and assertions it really needs), then writes and runs the test until it passes twice. |
 | `fix-broken-locator` | `locator`, `error`?, `url`? | Finds out why the locator fails (changed, ambiguous, hidden duplicate, iframe, overlay, timing) and fixes the actual cause. |
@@ -362,7 +362,7 @@ Every prompt tells the agent to study your existing framework first (driver setu
 
 ## Project structure
 
-```
+```text
 src/main/java/uk/xpathy/selenium/mcp/
 ├── McpServerApplication.java     # Spring Boot entry point
 ├── tools/                        # @McpTool-annotated classes — the MCP-facing surface

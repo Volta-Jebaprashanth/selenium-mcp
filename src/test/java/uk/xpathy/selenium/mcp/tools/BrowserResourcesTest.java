@@ -162,7 +162,7 @@ class BrowserResourcesTest {
     }
 
     private ResourceContents read(String uri) {
-        return specs.get(uri).readHandler().apply(null, new ReadResourceRequest(uri)).contents().get(0);
+        return specs.get(uri).readHandler().apply(null, ReadResourceRequest.builder(uri).build()).contents().get(0);
     }
 
     private String text(String uri) {

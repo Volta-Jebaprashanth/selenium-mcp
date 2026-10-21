@@ -64,14 +64,14 @@ class TestAutomationPromptsTest {
             Map<String, Object> args = spec.prompt().arguments().stream()
                     .filter(PromptArgument::required)
                     .collect(Collectors.toMap(PromptArgument::name, a -> "value-of-" + a.name()));
-            String text = text(spec.promptHandler().apply(null, new GetPromptRequest(name, args)));
+            String text = text(spec.promptHandler().apply(null, GetPromptRequest.builder(name).arguments(args).build()));
             assertFalse(text.contains("null"), name);
             args.values().forEach(value -> assertTrue(text.contains((String) value), name));
         });
     }
 
     private GetPromptResult get(String name, Map<String, Object> args) {
-        return specs.get(name).promptHandler().apply(null, new GetPromptRequest(name, args));
+        return specs.get(name).promptHandler().apply(null, GetPromptRequest.builder(name).arguments(args).build());
     }
 
     private static String text(GetPromptResult result) {

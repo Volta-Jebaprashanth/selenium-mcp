@@ -20,7 +20,7 @@ The server can't be smoke-tested by just running the jar and typing at it — it
 
 ## Architecture — three layers, keep them separate
 
-```
+```text
 tools/      @McpTool-annotated classes, plus the @McpResource (BrowserResources)
             and @McpPrompt (TestAutomationPrompts) classes. MCP-facing only:
             parameter validation, "is a browser open" precondition checks,
@@ -39,6 +39,7 @@ http/       Plain-Java REST client (ApiClient), with no Selenium/Spring/MCP
 ```
 
 When adding a new browser capability:
+
 1. Add the Selenium logic to `webdriver/` (usually as a method on `Tools`, delegating to the right collaborator — or a new collaborator if it's a distinct concern).
 2. Add a thin `@McpTool` wrapper method in `tools/BrowserTools.java` (or a new `tools/*Tools.java` class if it's a different domain) that checks preconditions and translates exceptions to strings.
 
