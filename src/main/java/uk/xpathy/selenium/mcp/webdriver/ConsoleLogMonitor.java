@@ -52,6 +52,10 @@ public class ConsoleLogMonitor {
         listenerAttached = true;
     }
 
+    public synchronized boolean isCapturing() {
+        return listenerAttached;
+    }
+
     private synchronized void record(ConsoleEvent event) {
         String message = String.join(" ", event.getMessages());
         entries.addLast(new ConsoleLogEntry(event.getTimestamp(), event.getType(), message));

@@ -21,9 +21,10 @@ The server can't be smoke-tested by just running the jar and typing at it — it
 ## Architecture — three layers, keep them separate
 
 ```
-tools/      @McpTool-annotated classes. MCP-facing only: parameter validation,
-            "is a browser open" precondition checks, exception → user-readable
-            string translation. No Selenium logic here.
+tools/      @McpTool-annotated classes, plus the @McpResource (BrowserResources)
+            and @McpPrompt (TestAutomationPrompts) classes. MCP-facing only:
+            parameter validation, "is a browser open" precondition checks,
+            exception → user-readable string translation. No Selenium logic here.
 
 webdriver/  Plain-Java Selenium layer. No Spring, no MCP annotations, no
             knowledge that it's being called from an MCP tool. Tools.java is
@@ -57,6 +58,8 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 - **Element tools that act on one element** should accept the optional `index`/`visibleOnly` parameters (descriptions in `ElementMatch`) and resolve them with `tools.locator(...)`, which builds a `FilteredBy` — don't hand-roll `findElements().get(n)`.
 - **Prefer raw CDP via `HasCdp.executeCdpCommand`** for one-shot Chrome/Edge commands (see `ScreenshotTaker.captureFullPage`, `InitScriptManager`): it sends plain JSON and keeps working when Chrome outpaces Selenium's bundled `selenium-devtools-vNN` modules, unlike `HasDevTools`/`NetworkInterceptor`/`HasLogEvents`.
 - **`@McpTool` methods return strings**, always — success and failure both. Catch exceptions in the tool wrapper and return a descriptive message; don't let exceptions propagate out of an `@McpTool` method.
+- **`@McpResource` methods never throw either.** Return `ResourceContents` built explicitly, so a "no browser" or failure answer can be `text/plain` even when the resource's declared type is JSON or PNG. Keep them read-only: reading a resource must not start capture or change browser state.
+- **`@McpPrompt` methods return a `GetPromptResult` with a single `Role.USER` message.** Spring AI wraps a plain `String` return as an *assistant* message, which is wrong for a prompt. Prompts are written for test automation engineers who already have a Java/Selenium framework, so they direct the agent to study and extend that framework, and to use this server's tools only to inspect the live application.
 - **Precondition checks** ("is a browser open?") belong in the `tools/` wrapper, mirroring the existing pattern in `BrowserTools` (`if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";`).
 - **`BrowserTools` methods are `synchronized`** — there's one browser session per server process; keep new stateful tool methods synchronized too rather than introducing concurrent access to the driver.
 - Favor collaborator objects wired through constructors (see `Tools`'s constructor) over static helpers or singletons.

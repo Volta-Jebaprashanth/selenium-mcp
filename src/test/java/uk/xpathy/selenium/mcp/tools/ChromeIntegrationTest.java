@@ -1,6 +1,8 @@
 package uk.xpathy.selenium.mcp.tools;
 
 import com.sun.net.httpserver.HttpServer;
+import io.modelcontextprotocol.spec.McpSchema.BlobResourceContents;
+import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -154,6 +156,21 @@ class ChromeIntegrationTest {
         assertFalse(entries.isEmpty(), "fetch was not captured");
         assertEquals(200, entries.get(0).status());
         tools.stopNetworkCapture();
+    }
+
+    @Test
+    void resourcesReadTheLiveSession() throws Exception {
+        BrowserResources resources = new BrowserResources(tools);
+
+        String session = ((TextResourceContents) resources.session()).text();
+        assertTrue(session.contains("\"mode\":\"launched\""), session);
+        assertTrue(session.contains("\"currentUrl\":\"" + baseUrl + "/\""), session);
+
+        String elements = ((TextResourceContents) resources.pageElements()).text();
+        assertTrue(elements.contains("\"id\":\"second\""), elements);
+
+        BlobResourceContents screenshot = (BlobResourceContents) resources.pageScreenshot();
+        assertTrue(decode(screenshot.blob()).getWidth() > 0);
     }
 
     private static BufferedImage decode(String base64) throws Exception {

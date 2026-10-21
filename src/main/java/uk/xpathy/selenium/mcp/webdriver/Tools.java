@@ -785,6 +785,10 @@ public class Tools {
         requireNetworkMonitor().stopCapture();
     }
 
+    public boolean isNetworkCapturing() {
+        return requireNetworkMonitor().isCapturing();
+    }
+
     public void clearNetworkLog() {
         requireNetworkMonitor().clearLog();
     }
@@ -846,6 +850,10 @@ public class Tools {
 
     public void startConsoleCapture() {
         requireConsoleLogMonitor().start();
+    }
+
+    public boolean isConsoleCapturing() {
+        return requireConsoleLogMonitor().isCapturing();
     }
 
     public java.util.List<ConsoleLogMonitor.ConsoleLogEntry> getConsoleLogs(String type, int limit) {

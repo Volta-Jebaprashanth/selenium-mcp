@@ -134,7 +134,7 @@ Download the jar (see [Get the jar](#get-the-jar) above), then point your MCP cl
 
 Every tool's schema costs the client tokens. Tool classes are grouped, and groups you don't need can be switched off with a launch argument. `BrowserTools` (lifecycle, navigation, click, sendKeys) is always on.
 
-Groups: `actions`, `alerts`, `api`, `cookies`, `elements`, `files`, `frames`, `network`, `page-source`, `screenshots`, `script`, `select`, `system`, `wait`, `window`.
+Groups: `actions`, `alerts`, `api`, `cookies`, `elements`, `files`, `frames`, `network`, `page-source`, `screenshots`, `script`, `select`, `system`, `wait`, `window`, plus `resources` and `prompts` for the [MCP resources and prompts](#resources--prompts).
 
 ```json
 "args": ["-jar", "/absolute/path/to/selenium-mcp.jar", "--selenium.mcp.exclude-tool-groups=api,network,cookies,alerts,select,files"]
@@ -327,6 +327,39 @@ Headers are passed as a JSON object string, e.g. `{"Authorization": "Bearer xyz"
 |---|---|
 | `getStatus` | Basic server health check. |
 
+## Resources & prompts
+
+Besides tools, the server exposes MCP **resources** (live browser state you can attach to a conversation without a tool call) and **prompts** (ready-made test automation workflows). How they appear depends on the client. In Claude Code, resources are `@`-mentions (`@selenium-mcp:selenium://page/elements`) and prompts are slash commands (`/mcp__selenium-mcp__debug-failing-test CheckoutTest#placeOrder`). Clients that only support tools ignore both.
+
+### Resources (`BrowserResources`)
+
+| URI | Content |
+|---|---|
+| `selenium://session` | Browser, launched or attached (with debugger address), current URL and title, open alert, window count, and whether network/console capture is on. |
+| `selenium://page/elements` | The page as a compact JSON element tree, same as `getPageElements`. The cheap way to give the agent the page. |
+| `selenium://page/source` | Full page HTML. |
+| `selenium://page/screenshot` | Viewport screenshot (PNG). |
+| `selenium://console/logs` | Console entries captured so far. Chrome/Edge. |
+| `selenium://network/log` | One line per captured request (method, URL, status, duration), no headers or bodies. Chrome/Edge. |
+| `selenium://network/failures` | Captured 4xx/5xx responses from the real backend, with headers and bodies; mocked/blocked requests left out. Chrome/Edge. |
+| `selenium://guide/locators` | Locator stability guide: preferred strategies, what to avoid, how to verify against the live page. |
+
+Console and network resources only show what was recorded after `startConsoleCapture`/`startNetworkCapture`; they say so when capture is off.
+
+### Prompts (`TestAutomationPrompts`)
+
+Every prompt tells the agent to study your existing framework first (driver setup, Page Object style, wait helpers, assertion library, test data) and extend it. The tools are used to inspect the live application, never called from the generated tests.
+
+| Prompt | Arguments | What the agent does |
+|---|---|---|
+| `generate-page-object` | `pageName`, `url`?, `scope`? | Inspects the live page and writes a Page Object in your framework's style, with every locator verified against the DOM. |
+| `write-test` | `scenario`, `url`?, `testName`? | Walks the scenario in the browser first (finding the waits and assertions it really needs), then writes and runs the test until it passes twice. |
+| `fix-broken-locator` | `locator`, `error`?, `url`? | Finds out why the locator fails (changed, ambiguous, hidden duplicate, iframe, overlay, timing) and fixes the actual cause. |
+| `debug-failing-test` | `test`, `error`? | Runs the test inside a `launchDebugBrowser` browser, inspects the failure state, separates test bugs from app bugs, fixes and reruns. |
+| `fix-flaky-test` | `test`, `symptom`? | Reproduces with network/console capture (and throttling), finds the race, replaces sleeps and retries with a precise wait. |
+| `review-page-object` | `pageObject`, `url`? | Audits every locator in a Page Object against the live page (OK / broken / ambiguous / brittle) and fixes them. |
+| `api-ui-test` | `scenario`, `apiBaseUrl`? | Sets up and checks data through the API (reusing your REST Assured layer) and drives only the behaviour under test through the UI. |
+
 ## Project structure
 
 ```
@@ -349,7 +382,9 @@ src/main/java/uk/xpathy/selenium/mcp/
 │   ├── FileTools.java             # File upload & PDF printing
 │   ├── NetworkTools.java          # CDP network capture/mocking/blocking, console logs (Chrome/Edge)
 │   ├── ApiTools.java              # REST API automation, independent of the browser session
-│   └── SystemTools.java
+│   ├── SystemTools.java
+│   ├── BrowserResources.java      # MCP resources: live session, page, screenshot, console/network state
+│   └── TestAutomationPrompts.java # MCP prompts: test automation workflows
 ├── webdriver/                    # Plain-Java Selenium layer, no MCP/Spring dependency
 │   ├── Tools.java                 # Facade / entry point for this package
 │   ├── BrowserFactory.java        # Creates WebDriver instances per browser

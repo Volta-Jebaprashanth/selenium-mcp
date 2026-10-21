@@ -85,6 +85,10 @@ public class NetworkMonitor {
         this.capturing = false;
     }
 
+    public boolean isCapturing() {
+        return capturing;
+    }
+
     public synchronized void clearLog() {
         entries.clear();
     }

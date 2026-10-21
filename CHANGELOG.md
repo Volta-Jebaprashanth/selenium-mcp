@@ -10,6 +10,9 @@ once it reaches a 1.0.0 release.
 
 ### Added
 
+- MCP resources (`BrowserResources`): live browser state to attach to a conversation without a tool call: `selenium://session`, `selenium://page/elements`, `selenium://page/source`, `selenium://page/screenshot`, `selenium://console/logs`, `selenium://network/log`, `selenium://network/failures`, and a `selenium://guide/locators` reference.
+- MCP prompts (`TestAutomationPrompts`) for test automation workflows that work inside the user's existing framework: `generate-page-object`, `write-test`, `fix-broken-locator`, `debug-failing-test`, `fix-flaky-test`, `review-page-object`, `api-ui-test`.
+- `resources` and `prompts` groups for `--selenium.mcp.tool-groups` / `--selenium.mcp.exclude-tool-groups`.
 - npm distribution with a bundled Java runtime: `npx -y @xpathy/selenium-mcp`, no JDK install needed (Windows x64, Linux x64, macOS Intel/Apple Silicon). See the README's Quick start. The launcher repairs an npx cache that's missing its platform package, and releases are published via npm trusted publishing.
 - `takeScreenshot` `fullPage` option for capturing the whole scrollable page (Chrome/Edge via raw CDP, Firefox natively).
 - `executeScript` `timeoutMs` option to override the 30-second script timeout per call.

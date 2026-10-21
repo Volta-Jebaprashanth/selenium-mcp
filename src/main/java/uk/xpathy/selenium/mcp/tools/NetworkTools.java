@@ -82,7 +82,7 @@ public class NetworkTools {
             try {
                 List<NetworkMonitor.NetworkEntry> entries =
                         tools.getNetworkLog(urlPattern, method, limit == null ? DEFAULT_LOG_LIMIT : limit);
-                return toJson(entries.stream().map(this::toMap).toList());
+                return toJson(entries.stream().map(NetworkTools::toMap).toList());
             } catch (UnsupportedOperationException e) {
                 return ErrorMessages.of(e);
             } catch (Exception e) {
@@ -319,7 +319,7 @@ public class NetworkTools {
             try {
                 List<ConsoleLogMonitor.ConsoleLogEntry> entries =
                         tools.getConsoleLogs(type, limit == null ? DEFAULT_LOG_LIMIT : limit);
-                return toJson(entries.stream().map(this::toMap).toList());
+                return toJson(entries.stream().map(NetworkTools::toMap).toList());
             } catch (UnsupportedOperationException e) {
                 return ErrorMessages.of(e);
             } catch (Exception e) {
@@ -341,7 +341,7 @@ public class NetworkTools {
         }
     }
 
-    private Map<String, Object> toMap(NetworkMonitor.NetworkEntry entry) {
+    static Map<String, Object> toMap(NetworkMonitor.NetworkEntry entry) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("timestamp", entry.timestamp().toString());
         map.put("method", entry.method());
@@ -356,7 +356,7 @@ public class NetworkTools {
         return map;
     }
 
-    private Map<String, Object> toMap(ConsoleLogMonitor.ConsoleLogEntry entry) {
+    static Map<String, Object> toMap(ConsoleLogMonitor.ConsoleLogEntry entry) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("timestamp", entry.timestamp().toString());
         map.put("type", entry.type());
