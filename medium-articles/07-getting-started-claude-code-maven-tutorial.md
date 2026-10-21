@@ -8,48 +8,58 @@ This one's a walkthrough, not an argument. If you're a test automation engineer 
 
 Nothing exotic:
 
-- Java 21+, with `JAVA_HOME` pointing at it
+- [Node.js](https://nodejs.org) 18+, for `npx`
 - Chrome, Firefox, or Edge installed locally — WebDriver binaries are fetched automatically on first use, no manual driver management
-- An MCP-capable client: Claude Code, Claude Desktop, Cursor, etc.
+- An MCP-capable client: Claude Code, Claude Desktop, Cursor, VS Code, etc.
 
-That's the whole list. No Node toolchain, no separate browser runtime to install — the server drives the actual browser you already have.
+That's the whole list. Notice what's *not* on it: Java. The server is written in Java, but it's published to npm as `@xpathy/selenium-mcp` with its own trimmed Java 21 runtime bundled, so you don't need a JDK installed or `JAVA_HOME` set just to run it. And there's no separate browser runtime either — the server drives the actual browser you already have.
 
-## Step 1 — Grab the jar
+## Step 1 — Add it to your MCP client
 
-Every push to `main` publishes a fresh GitHub Release with the jar attached, so there's no build step required:
-
-**[⬇ Download selenium-mcp.jar (latest release)](https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest/download/selenium-mcp.jar)**
-
-If you'd rather build from source:
-
-```bash
-git clone https://github.com/Volta-Jebaprashanth/selenium-mcp.git
-cd selenium-mcp
-mvn clean package
-```
-
-## Step 2 — Point your MCP client at it
-
-The server talks over stdio, so it's launched by your MCP client rather than run standalone in a terminal. For Claude Code or Claude Desktop, add this to your MCP server config, adjusting the path to wherever you saved the jar:
+The server talks over stdio, so it's launched by your MCP client rather than run standalone in a terminal. For Claude Code (`.mcp.json`), Cursor, or Claude Desktop, add this to your MCP server config:
 
 ```json
 {
   "mcpServers": {
     "selenium-mcp": {
-      "command": "java",
-      "args": ["-jar", "/absolute/path/to/selenium-mcp.jar"]
+      "command": "npx",
+      "args": ["-y", "@xpathy/selenium-mcp"]
     }
   }
 }
 ```
 
-Restart your client, and you should see `selenium-mcp` show up as an available tool provider, with all 112 tools across 16 categories ready to call.
+A few variations, depending on where you're running it:
 
-## Step 3 — Point it at your actual Maven project
+- **Claude Code from a terminal**, if you'd rather not edit JSON: `claude mcp add selenium-mcp -- npx -y @xpathy/selenium-mcp`
+- **Claude Code on native Windows** needs `npx` wrapped in `cmd /c`: `"command": "cmd", "args": ["/c", "npx", "-y", "@xpathy/selenium-mcp"]`
+- **VS Code** (`.vscode/mcp.json`) uses `servers` as the top-level key instead of `mcpServers`; the inner `command`/`args` are the same.
+
+Restart your client, and you should see `selenium-mcp` show up as an available tool provider, with all 116 tools across 16 categories ready to call.
+
+**The first start is the slow one.** npm installs only the platform package matching your machine (Windows x64, Linux x64, macOS Intel, or macOS Apple Silicon), but that's still around 90 MB — the Java runtime plus the server. If your client gives up waiting on that first launch, just restart the server once, or pre-download it from a terminal beforehand with `npx -y @xpathy/selenium-mcp --version`. Every start after that is local. Logs go to `~/.selenium-mcp/mcp-server.log` if you need to see what happened.
+
+**Optional: load fewer tools.** Every tool's schema costs your agent context tokens before it's done anything. Anything you append to `args` is passed through to the server, so if you're only interested in the browser and element discovery for now, you can switch off whole tool groups:
+
+```json
+"args": ["-y", "@xpathy/selenium-mcp", "--selenium.mcp.exclude-tool-groups=api,network,cookies,alerts,select,files"]
+```
+
+That takes it from 116 tools down to 75. Core browser tools (open, navigate, click, type) are always on.
+
+### Prefer running the jar on your own JDK?
+
+If your team would rather run it on a Java 21+ runtime you already manage — locked-down machines, no Node allowed, or just preference — the plain jar is still published with every GitHub Release:
+
+**[⬇ Download selenium-mcp.jar (latest release)](https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest/download/selenium-mcp.jar)**
+
+and is wired up with `"command": "java", "args": ["-jar", "/absolute/path/to/selenium-mcp.jar"]` instead. Or build it from source with `git clone https://github.com/Volta-Jebaprashanth/selenium-mcp.git && cd selenium-mcp && mvn clean package`. Same server, same tools — npm is just the shorter path.
+
+## Step 2 — Point it at your actual Maven project
 
 This is the part that matters if you're evaluating this for real work rather than just kicking the tires: open your MCP client in the same workspace as your existing Java/Selenium/Maven test project. The agent isn't just driving a throwaway browser session — it's writing Java files directly into your `src/test/java` tree, using whatever test framework (TestNG, JUnit 5) and structure your project already has.
 
-## Step 4 — Ask for a real test
+## Step 3 — Ask for a real test
 
 Here's a prompt shape that exercises the actual point of the tool, rather than a toy example:
 
@@ -57,7 +67,7 @@ Here's a prompt shape that exercises the actual point of the tool, rather than a
 
 Watch the tool calls as they happen (most MCP clients show these): `openBrowser`, `navigate`, then `getPageElementsFiltered` against the login form to get real ancestor/sibling-disambiguated locators — not guesses. The agent writes the `By` selectors from what it actually found on the page, adds a `waitForVisible` or `waitForPageLoad` where the flow needs it, and hands you a test file that follows your project's existing conventions because it can see them, same as it can see the page.
 
-## Step 5 — Run it, review it like any other PR
+## Step 4 — Run it, review it like any other PR
 
 The output is a plain Java file using standard Selenium and your existing test framework — nothing proprietary, no runtime dependency on the MCP server itself (see the [architecture piece](05-architecture-tour-clean-selenium-layer.md) if you want the detail on why that's true by design). Run it with your normal `mvn test`. Review it the way you'd review any teammate's PR — check the locators are sensible, check the waits are appropriate, ask for changes the same way you would with a human's first draft.
 
@@ -67,6 +77,7 @@ Once the basic loop works, a few follow-ups are worth exploring in the same sess
 
 - Ask it to add a REST Assured-style verification step using `ApiTools`, seeding or checking data through the API instead of only through the UI — see the [API+UI piece](04-rest-assured-ai-gap-api-ui-testing.md) for what that looks like in practice.
 - Point it at a flaky existing test and ask it to diagnose the timing issue using `NetworkTools` — `waitForNetworkIdle` and `getNetworkLog` in particular.
+- Next time a test fails, have it attach to the browser the test was driving (`launchDebugBrowser` / `connectToBrowser`) and inspect the live failure state instead of reproducing it — see the [debugger-mode piece](11-attach-ai-agent-to-failing-selenium-test-browser.md).
 - Ask it to refactor an existing Page Object's brittle locators using `getPageElementsFiltered`, rather than only writing new ones.
 
 ## If something doesn't work

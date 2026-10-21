@@ -31,6 +31,8 @@ With an AI agent that has both `WaitTools` and `NetworkTools` available in the s
 
 Once the actual cause is known, the fix is usually obvious and small: swap a blind `Thread.sleep(2000)` for `waitForNetworkIdle`, or add `waitForElementCount` where the UI renders a list in multiple network round trips instead of one. The value isn't that the agent knows an API you didn't — it's that it can *run the reproduction and read the evidence* faster than you can context-switch into doing it yourself, especially for a test that only fails intermittently and needs a few reproduction attempts to catch in the act.
 
+And when you'd rather not reproduce at all, the agent can attach to the very browser your test was running in (Chrome/Edge, over the remote-debugging port) and read the network log, console and DOM in the real failure state. That workflow has [its own piece](11-attach-ai-agent-to-failing-selenium-test-browser.md).
+
 ## A pattern worth adopting even without an AI agent in the loop
 
 Independent of whether you're using an agent at all: if you're debugging a flaky Selenium test today, reach for `waitForNetworkIdle` and a network log before you reach for a longer sleep. A longer sleep treats the symptom and makes your suite slower for everyone, forever, whether or not the race condition is even still there next month. Actually looking at what's in flight when the assertion fires tells you the real cause, and usually the real fix is a more precise wait, not a bigger one.
