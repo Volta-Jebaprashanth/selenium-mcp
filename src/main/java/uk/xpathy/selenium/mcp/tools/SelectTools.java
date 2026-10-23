@@ -35,7 +35,7 @@ public class SelectTools {
                 tools.selectByVisibleText(locatorType, locatorValue, text);
                 return "Selected option with text \"" + text + "\"";
             } catch (Exception e) {
-                return "Failed to select option: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e);
             }
         }
     }
@@ -52,7 +52,7 @@ public class SelectTools {
                 tools.selectByValue(locatorType, locatorValue, optionValue);
                 return "Selected option with value \"" + optionValue + "\"";
             } catch (Exception e) {
-                return "Failed to select option: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e);
             }
         }
     }
@@ -69,7 +69,7 @@ public class SelectTools {
                 tools.selectByIndex(locatorType, locatorValue, index);
                 return "Selected option at index " + index;
             } catch (Exception e) {
-                return "Failed to select option: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e);
             }
         }
     }
@@ -85,7 +85,7 @@ public class SelectTools {
                 tools.deselectAllOptions(locatorType, locatorValue);
                 return "Deselected all options.";
             } catch (Exception e) {
-                return "Failed to deselect options: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to deselect options: " + ErrorMessages.of(e);
             }
         }
     }
@@ -101,7 +101,7 @@ public class SelectTools {
                 List<String> texts = tools.getSelectedOptionsText(locatorType, locatorValue);
                 return String.join(", ", texts);
             } catch (Exception e) {
-                return "Failed to get selected options: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get selected options: " + ErrorMessages.of(e);
             }
         }
     }
@@ -116,7 +116,7 @@ public class SelectTools {
             try {
                 return String.valueOf(tools.isMultipleSelect(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check multiple-select state: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to check multiple-select state: " + ErrorMessages.of(e);
             }
         }
     }

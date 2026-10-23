@@ -48,9 +48,9 @@ public class NetworkTools {
                 tools.startNetworkCapture(urlPattern);
                 return "Network capture started" + (urlPattern != null && !urlPattern.isBlank() ? " for URLs matching: " + urlPattern : ".");
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to start network capture: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to start network capture: " + ErrorMessages.of(e);
             }
         }
     }
@@ -64,7 +64,7 @@ public class NetworkTools {
                 tools.stopNetworkCapture();
                 return "Network capture stopped.";
             } catch (Exception e) {
-                return "Failed to stop network capture: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to stop network capture: " + ErrorMessages.of(e);
             }
         }
     }
@@ -87,9 +87,9 @@ public class NetworkTools {
                         tools.getNetworkLog(urlPattern, method, limit == null ? DEFAULT_LOG_LIMIT : limit);
                 return toJson(entries.stream().map(this::toMap).toList());
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to read network log: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to read network log: " + ErrorMessages.of(e);
             }
         }
     }
@@ -103,7 +103,7 @@ public class NetworkTools {
                 tools.clearNetworkLog();
                 return "Network log cleared.";
             } catch (Exception e) {
-                return "Failed to clear network log: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to clear network log: " + ErrorMessages.of(e);
             }
         }
     }
@@ -124,9 +124,9 @@ public class NetworkTools {
                         timeoutSeconds == null ? DEFAULT_TIMEOUT_SECONDS : timeoutSeconds);
                 return "Network is idle.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Timed out waiting for network idle: " + ErrorMessages.of(e);
+                return sessions.label() + "Timed out waiting for network idle: " + ErrorMessages.of(e);
             }
         }
     }
@@ -141,9 +141,9 @@ public class NetworkTools {
                 tools.armNetworkTracking();
                 return String.valueOf(tools.getPendingRequestCount());
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to read pending request count: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to read pending request count: " + ErrorMessages.of(e);
             }
         }
     }
@@ -171,9 +171,9 @@ public class NetworkTools {
                 tools.mockResponse(urlPattern, method, status, contentType, body, parseHeaders(headersJson));
                 return "Mock registered for requests matching: " + urlPattern;
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to register mock: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to register mock: " + ErrorMessages.of(e);
             }
         }
     }
@@ -187,7 +187,7 @@ public class NetworkTools {
                 tools.clearMockResponses();
                 return "All mocks cleared.";
             } catch (Exception e) {
-                return "Failed to clear mocks: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to clear mocks: " + ErrorMessages.of(e);
             }
         }
     }
@@ -205,9 +205,9 @@ public class NetworkTools {
                 tools.blockRequests(urlPattern);
                 return "Blocking requests matching: " + urlPattern;
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to block requests: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to block requests: " + ErrorMessages.of(e);
             }
         }
     }
@@ -221,7 +221,7 @@ public class NetworkTools {
                 tools.clearBlockedRequests();
                 return "All blocking rules cleared.";
             } catch (Exception e) {
-                return "Failed to clear blocking rules: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to clear blocking rules: " + ErrorMessages.of(e);
             }
         }
     }
@@ -246,9 +246,9 @@ public class NetworkTools {
                         uploadThroughputKbps == null ? -1 : uploadThroughputKbps);
                 return "Network conditions applied.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to set network conditions: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to set network conditions: " + ErrorMessages.of(e);
             }
         }
     }
@@ -261,9 +261,9 @@ public class NetworkTools {
             try {
                 return tools.getNetworkConditions();
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to read network conditions: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to read network conditions: " + ErrorMessages.of(e);
             }
         }
     }
@@ -277,9 +277,9 @@ public class NetworkTools {
                 tools.clearNetworkConditions();
                 return "Network conditions reset to normal.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to reset network conditions: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to reset network conditions: " + ErrorMessages.of(e);
             }
         }
     }
@@ -298,9 +298,9 @@ public class NetworkTools {
                 tools.setBasicAuthCredentials(username, password);
                 return "Basic auth credentials registered.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to register basic auth credentials: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to register basic auth credentials: " + ErrorMessages.of(e);
             }
         }
     }
@@ -315,9 +315,9 @@ public class NetworkTools {
                 tools.startConsoleCapture();
                 return "Console log capture started.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to start console log capture: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to start console log capture: " + ErrorMessages.of(e);
             }
         }
     }
@@ -337,9 +337,9 @@ public class NetworkTools {
                         tools.getConsoleLogs(type, limit == null ? DEFAULT_LOG_LIMIT : limit);
                 return toJson(entries.stream().map(this::toMap).toList());
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to read console logs: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to read console logs: " + ErrorMessages.of(e);
             }
         }
     }
@@ -353,7 +353,7 @@ public class NetworkTools {
                 tools.clearConsoleLogs();
                 return "Console log cleared.";
             } catch (Exception e) {
-                return "Failed to clear console log: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to clear console log: " + ErrorMessages.of(e);
             }
         }
     }

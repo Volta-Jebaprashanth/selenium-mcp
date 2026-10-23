@@ -38,7 +38,7 @@ public class ElementQueryTools {
             try {
                 return tools.getText(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
             } catch (Exception e) {
-                return "Failed to get text: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get text: " + ErrorMessages.of(e);
             }
         }
     }
@@ -57,7 +57,7 @@ public class ElementQueryTools {
                 String value = tools.getAttribute(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), attributeName);
                 return value == null ? "(null)" : value;
             } catch (Exception e) {
-                return "Failed to get attribute: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get attribute: " + ErrorMessages.of(e);
             }
         }
     }
@@ -73,7 +73,7 @@ public class ElementQueryTools {
             try {
                 return tools.getCssValue(locatorType, locatorValue, propertyName);
             } catch (Exception e) {
-                return "Failed to get CSS value: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get CSS value: " + ErrorMessages.of(e);
             }
         }
     }
@@ -88,7 +88,7 @@ public class ElementQueryTools {
             try {
                 return tools.getTagName(locatorType, locatorValue);
             } catch (Exception e) {
-                return "Failed to get tag name: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get tag name: " + ErrorMessages.of(e);
             }
         }
     }
@@ -103,7 +103,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.isDisplayed(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check displayed state: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to check displayed state: " + ErrorMessages.of(e);
             }
         }
     }
@@ -118,7 +118,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.isEnabled(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check enabled state: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to check enabled state: " + ErrorMessages.of(e);
             }
         }
     }
@@ -133,7 +133,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.isSelected(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check selected state: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to check selected state: " + ErrorMessages.of(e);
             }
         }
     }
@@ -149,7 +149,7 @@ public class ElementQueryTools {
                 Dimension size = tools.getElementSize(locatorType, locatorValue);
                 return size.getWidth() + "x" + size.getHeight();
             } catch (Exception e) {
-                return "Failed to get element size: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get element size: " + ErrorMessages.of(e);
             }
         }
     }
@@ -165,7 +165,7 @@ public class ElementQueryTools {
                 Point location = tools.getElementLocation(locatorType, locatorValue);
                 return "(" + location.getX() + ", " + location.getY() + ")";
             } catch (Exception e) {
-                return "Failed to get element location: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get element location: " + ErrorMessages.of(e);
             }
         }
     }
@@ -180,7 +180,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.elementExists(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to check element existence: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to check element existence: " + ErrorMessages.of(e);
             }
         }
     }
@@ -195,7 +195,7 @@ public class ElementQueryTools {
             try {
                 return String.valueOf(tools.countElements(locatorType, locatorValue));
             } catch (Exception e) {
-                return "Failed to count elements: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to count elements: " + ErrorMessages.of(e);
             }
         }
     }
@@ -211,7 +211,7 @@ public class ElementQueryTools {
                 List<String> texts = tools.getElementsText(locatorType, locatorValue);
                 return String.join("\n", texts);
             } catch (Exception e) {
-                return "Failed to get elements text: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get elements text: " + ErrorMessages.of(e);
             }
         }
     }

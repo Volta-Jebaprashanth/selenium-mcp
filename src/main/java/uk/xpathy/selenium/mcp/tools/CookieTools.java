@@ -39,7 +39,7 @@ public class CookieTools {
                 }
                 return "Cookie " + name + " added.";
             } catch (Exception e) {
-                return "Failed to add cookie: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to add cookie: " + ErrorMessages.of(e);
             }
         }
     }
@@ -54,7 +54,7 @@ public class CookieTools {
                 Cookie cookie = tools.getCookie(name);
                 return cookie == null ? "No cookie named " + name + " found." : cookie.toString();
             } catch (Exception e) {
-                return "Failed to get cookie: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get cookie: " + ErrorMessages.of(e);
             }
         }
     }
@@ -69,7 +69,7 @@ public class CookieTools {
                 if (cookies.isEmpty()) return "No cookies set.";
                 return cookies.stream().map(cookie -> cookie.toString()).collect(Collectors.joining("\n"));
             } catch (Exception e) {
-                return "Failed to get cookies: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get cookies: " + ErrorMessages.of(e);
             }
         }
     }
@@ -84,7 +84,7 @@ public class CookieTools {
                 tools.deleteCookie(name);
                 return "Cookie " + name + " deleted.";
             } catch (Exception e) {
-                return "Failed to delete cookie: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to delete cookie: " + ErrorMessages.of(e);
             }
         }
     }
@@ -98,7 +98,7 @@ public class CookieTools {
                 tools.deleteAllCookies();
                 return "All cookies deleted.";
             } catch (Exception e) {
-                return "Failed to delete cookies: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to delete cookies: " + ErrorMessages.of(e);
             }
         }
     }

@@ -241,7 +241,7 @@ public class BrowserTools {
                 tools.navigateTo(url);
                 return sessions.label() + "Navigated to " + url;
             } catch (Exception e) {
-                return "Failed to navigate: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to navigate: " + ErrorMessages.of(e);
             }
         }
     }
@@ -257,7 +257,7 @@ public class BrowserTools {
                 tools.back();
                 return sessions.label() + "Navigated back.";
             } catch (Exception e) {
-                return "Failed to navigate back: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to navigate back: " + ErrorMessages.of(e);
             }
         }
     }
@@ -273,7 +273,7 @@ public class BrowserTools {
                 tools.forward();
                 return sessions.label() + "Navigated forward.";
             } catch (Exception e) {
-                return "Failed to navigate forward: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to navigate forward: " + ErrorMessages.of(e);
             }
         }
     }
@@ -289,7 +289,7 @@ public class BrowserTools {
                 tools.refresh();
                 return sessions.label() + "Page refreshed.";
             } catch (Exception e) {
-                return "Failed to refresh: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to refresh: " + ErrorMessages.of(e);
             }
         }
     }
@@ -304,7 +304,7 @@ public class BrowserTools {
             try {
                 return sessions.label() + tools.getCurrentUrl();
             } catch (Exception e) {
-                return "Failed to get the current URL: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get the current URL: " + ErrorMessages.of(e);
             }
         }
     }
@@ -319,7 +319,7 @@ public class BrowserTools {
             try {
                 return sessions.label() + tools.getTitle();
             } catch (Exception e) {
-                return "Failed to get the title: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get the title: " + ErrorMessages.of(e);
             }
         }
     }
@@ -334,7 +334,7 @@ public class BrowserTools {
             try {
                 return tools.getPageSource();
             } catch (Exception e) {
-                return "Failed to get the page source: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get the page source: " + ErrorMessages.of(e);
             }
         }
     }
@@ -356,7 +356,7 @@ public class BrowserTools {
                 tools.click(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return sessions.label() + "Clicked element located by " + locatorType + "=" + locatorValue;
             } catch (Exception e) {
-                return "Failed to click element: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to click element: " + ErrorMessages.of(e);
             }
         }
     }
@@ -382,7 +382,7 @@ public class BrowserTools {
                 tools.sendKeys(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), text, Boolean.TRUE.equals(clearFirst));
                 return sessions.label() + "Sent keys to element located by " + locatorType + "=" + locatorValue;
             } catch (Exception e) {
-                return "Failed to send keys: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to send keys: " + ErrorMessages.of(e);
             }
         }
     }

@@ -37,7 +37,7 @@ public class PageSourceTools {
             try {
                 return tools.getPageScripts();
             } catch (Exception e) {
-                return "Failed to get page scripts: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get page scripts: " + ErrorMessages.of(e);
             }
         }
     }
@@ -52,7 +52,7 @@ public class PageSourceTools {
             try {
                 return tools.getPageStyles();
             } catch (Exception e) {
-                return "Failed to get page styles: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get page styles: " + ErrorMessages.of(e);
             }
         }
     }
@@ -73,7 +73,7 @@ public class PageSourceTools {
             try {
                 return tools.getPageElements(maxDepth == null ? DEFAULT_MAX_DEPTH : maxDepth);
             } catch (Exception e) {
-                return "Failed to get page elements: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get page elements: " + ErrorMessages.of(e);
             }
         }
     }
@@ -127,7 +127,7 @@ public class PageSourceTools {
                         Boolean.TRUE.equals(includeSiblings), maxDepth == null ? DEFAULT_MAX_DEPTH : maxDepth,
                         limit == null ? DEFAULT_LIMIT : limit);
             } catch (Exception e) {
-                return "Failed to get filtered page elements: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get filtered page elements: " + ErrorMessages.of(e);
             }
         }
     }

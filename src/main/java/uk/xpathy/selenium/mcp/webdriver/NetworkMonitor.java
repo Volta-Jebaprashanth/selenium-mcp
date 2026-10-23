@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -48,12 +49,22 @@ public class NetworkMonitor {
     private final AtomicInteger pendingRequests = new AtomicInteger();
     private final AtomicLong lastActivityMillis = new AtomicLong(System.currentTimeMillis());
 
-    private NetworkInterceptor interceptor;
+    private final Function<Filter, ? extends AutoCloseable> interceptorFactory;
+    private AutoCloseable interceptor;
     private volatile boolean capturing;
     private volatile Pattern captureFilter;
 
     public NetworkMonitor(WebDriver driver) {
+        this(driver, filter -> new NetworkInterceptor(driver, filter));
+    }
+
+    /**
+     * @param interceptorFactory installs the filter on the browser; tests substitute one that keeps the
+     *                           filter so they can drive it without a live DevTools connection
+     */
+    NetworkMonitor(WebDriver driver, Function<Filter, ? extends AutoCloseable> interceptorFactory) {
         this.driver = driver;
+        this.interceptorFactory = interceptorFactory;
     }
 
     public record NetworkEntry(
@@ -245,7 +256,7 @@ public class NetworkMonitor {
             return;
         }
         Filter filter = next -> req -> handle(req, next);
-        interceptor = new NetworkInterceptor(driver, filter);
+        interceptor = interceptorFactory.apply(filter);
     }
 
     private HttpResponse handle(HttpRequest req, HttpHandler next) {
@@ -268,7 +279,9 @@ public class NetworkMonitor {
                 .findFirst().orElse(null);
         if (mock != null) {
             HttpResponse mockResponse = new HttpResponse().setStatus(mock.status());
-            mock.headers().forEach(mockResponse::addHeader);
+            // not mockResponse::addHeader - the Eclipse compiler links that to the package-private HttpMessage
+            // and it fails with IllegalAccessError at runtime
+            mock.headers().forEach((name, value) -> mockResponse.addHeader(name, value));
             if (mock.contentType() != null && !mock.contentType().isBlank()) {
                 mockResponse.setHeader("Content-Type", mock.contentType());
             }

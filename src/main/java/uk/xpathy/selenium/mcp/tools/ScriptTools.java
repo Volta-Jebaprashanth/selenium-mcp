@@ -45,7 +45,7 @@ public class ScriptTools {
                 Object result = tools.executeScript(script, timeoutMs == null ? null : Duration.ofMillis(timeoutMs));
                 return format(result);
             } catch (Exception e) {
-                return "Script error: " + ErrorMessages.of(e);
+                return sessions.label() + "Script error: " + ErrorMessages.of(e);
             }
         }
     }
@@ -65,9 +65,9 @@ public class ScriptTools {
                 String id = tools.addInitScript(script, !Boolean.FALSE.equals(runNow));
                 return "Init script registered with id " + id + ".";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to register init script: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to register init script: " + ErrorMessages.of(e);
             }
         }
     }
@@ -89,9 +89,9 @@ public class ScriptTools {
                 tools.removeInitScript(id.strip());
                 return "Removed init script " + id.strip() + ".";
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to remove init script: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to remove init script: " + ErrorMessages.of(e);
             }
         }
     }
@@ -113,7 +113,7 @@ public class ScriptTools {
                 tools.scrollIntoView(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Scrolled element into view.";
             } catch (Exception e) {
-                return "Failed to scroll into view: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to scroll into view: " + ErrorMessages.of(e);
             }
         }
     }
@@ -129,7 +129,7 @@ public class ScriptTools {
                 tools.scrollBy(x, y);
                 return "Scrolled by (" + x + ", " + y + ")";
             } catch (Exception e) {
-                return "Failed to scroll: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to scroll: " + ErrorMessages.of(e);
             }
         }
     }
@@ -143,7 +143,7 @@ public class ScriptTools {
                 tools.scrollToTop();
                 return "Scrolled to top.";
             } catch (Exception e) {
-                return "Failed to scroll to top: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to scroll to top: " + ErrorMessages.of(e);
             }
         }
     }
@@ -157,7 +157,7 @@ public class ScriptTools {
                 tools.scrollToBottom();
                 return "Scrolled to bottom.";
             } catch (Exception e) {
-                return "Failed to scroll to bottom: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to scroll to bottom: " + ErrorMessages.of(e);
             }
         }
     }

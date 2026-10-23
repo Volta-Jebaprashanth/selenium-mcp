@@ -1,6 +1,7 @@
 package uk.xpathy.selenium.mcp.tools;
 
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -155,7 +156,8 @@ class BrowserSessionsTest {
         when(first.getWindowHandles()).thenThrow(gone);
         when(first.getTitle()).thenThrow(gone);
 
-        assertEquals("Failed to get the title: invalid session id" + ErrorMessages.BROWSER_GONE_HINT, browserTools.getTitle());
+        assertEquals("[default] Failed to get the title: invalid session id" + ErrorMessages.BROWSER_GONE_HINT,
+                browserTools.getTitle());
 
         assertEquals("Session 'default' was removed: the browser is no longer reachable (closed or crashed).\n"
                 + "chrome browser opened as session 'default'.", open(null, "default"));
@@ -184,6 +186,20 @@ class BrowserSessionsTest {
 
         assertEquals(List.of(), sessions.pruneDead());
         assertTrue(sessions.has("default"));
+    }
+
+    @Test
+    void failuresSayWhichSessionTheyCameFromOnceSeveralAreOpen() {
+        AlertTools alertTools = new AlertTools(sessions);
+        when(first.switchTo()).thenThrow(new NoAlertPresentException("no such alert"));
+        when(second.switchTo()).thenThrow(new NoAlertPresentException("no such alert"));
+        open(null, null);
+
+        assertEquals("Failed to get alert text: no such alert", alertTools.getAlertText());
+
+        open(null, "admin");
+
+        assertEquals("[admin] Failed to get alert text: no such alert", alertTools.getAlertText());
     }
 
     private String open(String browser, String session) {

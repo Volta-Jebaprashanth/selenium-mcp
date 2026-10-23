@@ -35,7 +35,7 @@ public class ActionsTools {
                 tools.hover(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Hovered over element.";
             } catch (Exception e) {
-                return "Failed to hover: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to hover: " + ErrorMessages.of(e);
             }
         }
     }
@@ -53,7 +53,7 @@ public class ActionsTools {
                 tools.doubleClick(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Double-clicked element.";
             } catch (Exception e) {
-                return "Failed to double-click: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to double-click: " + ErrorMessages.of(e);
             }
         }
     }
@@ -71,7 +71,7 @@ public class ActionsTools {
                 tools.rightClick(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Right-clicked element.";
             } catch (Exception e) {
-                return "Failed to right-click: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to right-click: " + ErrorMessages.of(e);
             }
         }
     }
@@ -87,7 +87,7 @@ public class ActionsTools {
                 tools.clickAndHold(locatorType, locatorValue);
                 return "Clicked and held element.";
             } catch (Exception e) {
-                return "Failed to click and hold: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to click and hold: " + ErrorMessages.of(e);
             }
         }
     }
@@ -101,7 +101,7 @@ public class ActionsTools {
                 tools.release();
                 return "Released mouse button.";
             } catch (Exception e) {
-                return "Failed to release: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to release: " + ErrorMessages.of(e);
             }
         }
     }
@@ -119,7 +119,7 @@ public class ActionsTools {
                 tools.dragAndDrop(sourceLocatorType, sourceLocatorValue, targetLocatorType, targetLocatorValue);
                 return "Dragged element to target.";
             } catch (Exception e) {
-                return "Failed to drag and drop: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to drag and drop: " + ErrorMessages.of(e);
             }
         }
     }
@@ -137,7 +137,7 @@ public class ActionsTools {
                 tools.dragAndDropByOffset(locatorType, locatorValue, xOffset, yOffset);
                 return "Dragged element by offset (" + xOffset + ", " + yOffset + ")";
             } catch (Exception e) {
-                return "Failed to drag by offset: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to drag by offset: " + ErrorMessages.of(e);
             }
         }
     }
@@ -152,7 +152,7 @@ public class ActionsTools {
                 tools.pressKey(keyName);
                 return "Pressed key " + keyName;
             } catch (Exception e) {
-                return "Failed to press key: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to press key: " + ErrorMessages.of(e);
             }
         }
     }

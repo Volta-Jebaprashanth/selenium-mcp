@@ -34,7 +34,7 @@ public class FileTools {
                 tools.uploadFile(locatorType, locatorValue, absoluteFilePath);
                 return "Uploaded file " + absoluteFilePath;
             } catch (Exception e) {
-                return "Failed to upload file: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to upload file: " + ErrorMessages.of(e);
             }
         }
     }
@@ -53,7 +53,7 @@ public class FileTools {
                 tools.printToPdfFile(filePath);
                 return "PDF saved to " + filePath;
             } catch (Exception e) {
-                return "Failed to print to PDF: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to print to PDF: " + ErrorMessages.of(e);
             }
         }
     }

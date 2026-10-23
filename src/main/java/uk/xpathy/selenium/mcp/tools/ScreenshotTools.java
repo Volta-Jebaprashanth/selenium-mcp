@@ -43,9 +43,9 @@ public class ScreenshotTools {
                 tools.takeScreenshotToFile(filePath);
                 return "Viewport screenshot saved to " + filePath;
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to take screenshot: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to take screenshot: " + ErrorMessages.of(e);
             }
         }
     }
@@ -70,7 +70,7 @@ public class ScreenshotTools {
                 tools.takeElementScreenshotToFile(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), filePath);
                 return "Element screenshot saved to " + filePath;
             } catch (Exception e) {
-                return "Failed to take element screenshot: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to take element screenshot: " + ErrorMessages.of(e);
             }
         }
     }

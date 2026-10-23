@@ -27,7 +27,7 @@ public class AlertTools {
                 tools.acceptAlert();
                 return "Alert accepted.";
             } catch (Exception e) {
-                return "Failed to accept alert: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to accept alert: " + ErrorMessages.of(e);
             }
         }
     }
@@ -41,7 +41,7 @@ public class AlertTools {
                 tools.dismissAlert();
                 return "Alert dismissed.";
             } catch (Exception e) {
-                return "Failed to dismiss alert: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to dismiss alert: " + ErrorMessages.of(e);
             }
         }
     }
@@ -54,7 +54,7 @@ public class AlertTools {
             try {
                 return tools.getAlertText();
             } catch (Exception e) {
-                return "Failed to get alert text: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get alert text: " + ErrorMessages.of(e);
             }
         }
     }
@@ -69,7 +69,7 @@ public class AlertTools {
                 tools.sendKeysToAlert(text);
                 return "Sent keys to alert.";
             } catch (Exception e) {
-                return "Failed to send keys to alert: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to send keys to alert: " + ErrorMessages.of(e);
             }
         }
     }
@@ -82,7 +82,7 @@ public class AlertTools {
             try {
                 return String.valueOf(tools.isAlertPresent());
             } catch (Exception e) {
-                return "Failed to check for an alert: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to check for an alert: " + ErrorMessages.of(e);
             }
         }
     }
