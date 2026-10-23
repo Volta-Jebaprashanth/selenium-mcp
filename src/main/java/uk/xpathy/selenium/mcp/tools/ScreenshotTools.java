@@ -101,7 +101,7 @@ public class ScreenshotTools {
                     + base64Png.length() * 3 / 4 / 1_000_000 + " MB). Pass filePath to save it to disk instead.");
         }
         return CallToolResult.builder()
-                .addContent(new ImageContent(null, base64Png, "image/png"))
+                .addContent(new ImageContent(null, base64Png, "image/png", null))
                 .addTextContent(sessions.label() + caption + ".")
                 .build();
     }
