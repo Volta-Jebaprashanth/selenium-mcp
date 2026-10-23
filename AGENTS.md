@@ -47,6 +47,8 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 
 **CDP-backed features are Chrome/Edge only.** `webdriver/NetworkMonitor` (network capture/mocking/blocking/conditions, HTTP Basic auth) and `webdriver/ConsoleLogMonitor` (console log capture) are built on Selenium 4's Chrome DevTools Protocol support (`HasDevTools`/`NetworkInterceptor`/`HasLogEvents`), which Firefox doesn't implement. Their methods throw `UnsupportedOperationException` when the driver doesn't support it; the `tools/NetworkTools` wrappers catch that specifically and return an explanatory string rather than letting it read as a generic failure.
 
+**Browser sessions live in `tools/BrowserSessions`.** It holds one `webdriver/Tools` per named session and tracks the active one; every `@McpTool` acts on `sessions.active()`, so tool signatures carry no session parameter. Only `BrowserTools`' open/connect/launch tools create sessions (via `sessions.open(name, opener)`, which registers nothing if opening throws). `webdriver/` stays single-browser: one `Tools` is one browser.
+
 **Attaching over a remote-debugging port is Chrome/Edge only too.** `BrowserFactory.attach`/`launchDebuggable` return an `AttachedDriver` (driver + its `DriverService`). `BrowserSession.close()` disconnects such a session by stopping the service, never by quitting the driver, so a browser the user or a test is also using stays up. Keep that distinction if you touch session teardown.
 
 ## Conventions
@@ -57,8 +59,8 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 - **Element tools that act on one element** should accept the optional `index`/`visibleOnly` parameters (descriptions in `ElementMatch`) and resolve them with `tools.locator(...)`, which builds a `FilteredBy` — don't hand-roll `findElements().get(n)`.
 - **Prefer raw CDP via `HasCdp.executeCdpCommand`** for one-shot Chrome/Edge commands (see `ScreenshotTaker.captureFullPage`, `InitScriptManager`): it sends plain JSON and keeps working when Chrome outpaces Selenium's bundled `selenium-devtools-vNN` modules, unlike `HasDevTools`/`NetworkInterceptor`/`HasLogEvents`.
 - **`@McpTool` methods return strings**, always — success and failure both. Catch exceptions in the tool wrapper and return a descriptive message; don't let exceptions propagate out of an `@McpTool` method.
-- **Precondition checks** ("is a browser open?") belong in the `tools/` wrapper, mirroring the existing pattern in `BrowserTools` (`if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";`).
-- **`BrowserTools` methods are `synchronized`** — there's one browser session per server process; keep new stateful tool methods synchronized too rather than introducing concurrent access to the driver.
+- **Precondition checks** ("is a browser open?") belong in the `tools/` wrapper, mirroring the existing pattern (`Tools tools = sessions.active();` then `if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";`). With no session open, `active()` returns a `Tools` with no browser, so the check works unchanged.
+- **Tool methods run inside `synchronized (sessions)`** and read `sessions.active()` inside that block. This serializes every tool call across all sessions and keeps the active session from changing mid-call; keep new stateful tool methods to the same pattern rather than introducing concurrent access to a driver.
 - Favor collaborator objects wired through constructors (see `Tools`'s constructor) over static helpers or singletons.
 - Javadoc is used sparingly on package/class-level docs to explain *why* a class exists and how it relates to its neighbors — follow that style rather than commenting individual methods.
 

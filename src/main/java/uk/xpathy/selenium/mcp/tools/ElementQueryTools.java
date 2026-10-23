@@ -20,10 +20,10 @@ public class ElementQueryTools {
     private static final String LOCATOR_TYPE_DESC =
             "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName";
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public ElementQueryTools(Tools tools) {
-        this.tools = tools;
+    public ElementQueryTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Get the visible text of an element.")
@@ -32,7 +32,8 @@ public class ElementQueryTools {
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
             @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getText(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
@@ -49,7 +50,8 @@ public class ElementQueryTools {
             @McpToolParam(description = "The attribute name to read, e.g. href, value, class", required = true) String attributeName,
             @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
             @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 String value = tools.getAttribute(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), attributeName);
@@ -65,7 +67,8 @@ public class ElementQueryTools {
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = "The CSS property name, e.g. color, font-size", required = true) String propertyName) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getCssValue(locatorType, locatorValue, propertyName);
@@ -79,7 +82,8 @@ public class ElementQueryTools {
     public String getTagName(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getTagName(locatorType, locatorValue);
@@ -93,7 +97,8 @@ public class ElementQueryTools {
     public String isDisplayed(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return String.valueOf(tools.isDisplayed(locatorType, locatorValue));
@@ -107,7 +112,8 @@ public class ElementQueryTools {
     public String isEnabled(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return String.valueOf(tools.isEnabled(locatorType, locatorValue));
@@ -121,7 +127,8 @@ public class ElementQueryTools {
     public String isSelected(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return String.valueOf(tools.isSelected(locatorType, locatorValue));
@@ -135,7 +142,8 @@ public class ElementQueryTools {
     public String getElementSize(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Dimension size = tools.getElementSize(locatorType, locatorValue);
@@ -150,7 +158,8 @@ public class ElementQueryTools {
     public String getElementLocation(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Point location = tools.getElementLocation(locatorType, locatorValue);
@@ -165,7 +174,8 @@ public class ElementQueryTools {
     public String elementExists(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return String.valueOf(tools.elementExists(locatorType, locatorValue));
@@ -179,7 +189,8 @@ public class ElementQueryTools {
     public String countElements(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the elements", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return String.valueOf(tools.countElements(locatorType, locatorValue));
@@ -193,7 +204,8 @@ public class ElementQueryTools {
     public String getElementsText(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the elements", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 List<String> texts = tools.getElementsText(locatorType, locatorValue);

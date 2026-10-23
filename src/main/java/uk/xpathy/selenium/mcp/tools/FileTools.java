@@ -13,10 +13,10 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
 @ToolGroup("files")
 public class FileTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public FileTools(Tools tools) {
-        this.tools = tools;
+    public FileTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Upload a local file by sending its absolute path to an <input type=\"file\"> element. The file must exist on the machine running the browser.")
@@ -27,7 +27,8 @@ public class FileTools {
             String locatorValue,
             @McpToolParam(description = "Absolute path of the local file to upload", required = true)
             String absoluteFilePath) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.uploadFile(locatorType, locatorValue, absoluteFilePath);
@@ -42,7 +43,8 @@ public class FileTools {
     public String printToPdf(
             @McpToolParam(description = "Absolute file path to save the PDF to. If omitted, the PDF is returned as base64.", required = false)
             String filePath) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 if (filePath == null || filePath.isBlank()) {

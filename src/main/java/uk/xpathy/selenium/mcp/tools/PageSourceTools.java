@@ -21,17 +21,18 @@ public class PageSourceTools {
     private static final int DEFAULT_MAX_DEPTH = 20;
     private static final int DEFAULT_LIMIT = 50;
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public PageSourceTools(Tools tools) {
-        this.tools = tools;
+    public PageSourceTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Get every <script> on the current page as a JSON array, without the rest of the HTML. "
             + "Each entry has type (external or inline), plus src for external scripts or content for inline "
             + "scripts. Inline content over 10,000 characters is truncated with truncated: true.")
     public String getPageScripts() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getPageScripts();
@@ -45,7 +46,8 @@ public class PageSourceTools {
             + "Each entry has type (external or inline), plus href for external stylesheets or content for inline "
             + "<style> tags. Inline content over 10,000 characters is truncated with truncated: true.")
     public String getPageStyles() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getPageStyles();
@@ -65,7 +67,8 @@ public class PageSourceTools {
             @McpToolParam(description = "Max tree depth to descend from <body>. Deeper subtrees are reported as "
                     + "childrenTruncated: <count> instead of being expanded. Defaults to 20.", required = false)
             Integer maxDepth) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getPageElements(maxDepth == null ? DEFAULT_MAX_DEPTH : maxDepth);
@@ -115,7 +118,8 @@ public class PageSourceTools {
             Integer maxDepth,
             @McpToolParam(description = "Max number of matches to return. Defaults to 50.", required = false)
             Integer limit) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getPageElementsFiltered(locatorType, locatorValue,

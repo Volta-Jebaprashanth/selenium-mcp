@@ -45,6 +45,7 @@ class ChromeIntegrationTest {
             """;
 
     private static HttpServer server;
+    private static BrowserSessions sessions;
     private static Tools tools;
     private static String baseUrl;
 
@@ -62,13 +63,14 @@ class ChromeIntegrationTest {
         });
         server.start();
         baseUrl = "http://127.0.0.1:" + server.getAddress().getPort();
-        tools = new Tools();
-        tools.openBrowser("chrome", new BrowserOptions(true, false, "800x600", null));
+        sessions = new BrowserSessions(5);
+        tools = sessions.open(BrowserSessions.DEFAULT_SESSION,
+                t -> t.openBrowser("chrome", new BrowserOptions(true, false, "800x600", null)));
     }
 
     @AfterAll
     static void stop() {
-        if (tools != null) tools.closeBrowser();
+        if (sessions != null) sessions.closeAll();
         if (server != null) server.stop(0);
     }
 
@@ -79,7 +81,7 @@ class ChromeIntegrationTest {
 
     @Test
     void scriptErrorsAreOneLine() {
-        String result = new ScriptTools(tools).executeScript("return undefined.click()", null);
+        String result = new ScriptTools(sessions).executeScript("return undefined.click()", null);
         assertTrue(result.startsWith("Script error: javascript error:"), result);
         assertTrue(result.contains("reading 'click'"), result);
         assertFalse(result.contains("Build info") || result.contains("Capabilities") || result.contains("\n"), result);
@@ -87,7 +89,7 @@ class ChromeIntegrationTest {
 
     @Test
     void scriptResultsComeBackAsJson() {
-        assertEquals("{\"a\":1,\"b\":[\"x\"]}", new ScriptTools(tools).executeScript("return {a: 1, b: ['x']}", null));
+        assertEquals("{\"a\":1,\"b\":[\"x\"]}", new ScriptTools(sessions).executeScript("return {a: 1, b: ['x']}", null));
     }
 
     @Test

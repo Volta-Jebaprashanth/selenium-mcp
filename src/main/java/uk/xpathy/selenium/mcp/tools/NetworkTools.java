@@ -29,11 +29,11 @@ public class NetworkTools {
     private static final long DEFAULT_IDLE_MILLIS = 500;
     private static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public NetworkTools(Tools tools) {
-        this.tools = tools;
+    public NetworkTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Start capturing network traffic (method, URL, headers, bodies, status, timing) for the "
@@ -41,7 +41,8 @@ public class NetworkTools {
     public String startNetworkCapture(
             @McpToolParam(description = "Only capture requests whose URL matches this regex. Omit to capture everything.", required = false)
             String urlPattern) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.startNetworkCapture(urlPattern);
@@ -56,7 +57,8 @@ public class NetworkTools {
 
     @McpTool(description = "Stop capturing new network traffic. Already-captured entries remain available via getNetworkLog.")
     public String stopNetworkCapture() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.stopNetworkCapture();
@@ -77,7 +79,8 @@ public class NetworkTools {
             String method,
             @McpToolParam(description = "Max number of entries to return, most recent. Defaults to 100.", required = false)
             Integer limit) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 List<NetworkMonitor.NetworkEntry> entries =
@@ -93,7 +96,8 @@ public class NetworkTools {
 
     @McpTool(description = "Clear the captured network log without stopping capture.")
     public String clearNetworkLog() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearNetworkLog();
@@ -112,7 +116,8 @@ public class NetworkTools {
             Long idleMillis,
             @McpToolParam(description = "Max seconds to wait overall. Defaults to 30.", required = false)
             Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForNetworkIdle(idleMillis == null ? DEFAULT_IDLE_MILLIS : idleMillis,
@@ -129,7 +134,8 @@ public class NetworkTools {
     @McpTool(description = "Get the number of HTTP requests currently in flight. Requires Chrome or Edge; "
             + "arms passive network tracking as a side effect if it wasn't already active.")
     public String getPendingRequestCount() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.armNetworkTracking();
@@ -158,7 +164,8 @@ public class NetworkTools {
             String body,
             @McpToolParam(description = "Extra response headers as a JSON object, e.g. {\"X-Test\": \"1\"}. Omit for none.", required = false)
             String headersJson) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.mockResponse(urlPattern, method, status, contentType, body, parseHeaders(headersJson));
@@ -173,7 +180,8 @@ public class NetworkTools {
 
     @McpTool(description = "Remove all registered response mocks.")
     public String clearMockResponses() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearMockResponses();
@@ -190,7 +198,8 @@ public class NetworkTools {
     public String blockRequests(
             @McpToolParam(description = "Regex matched against the full request URL.", required = true)
             String urlPattern) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.blockRequests(urlPattern);
@@ -205,7 +214,8 @@ public class NetworkTools {
 
     @McpTool(description = "Remove all URL blocking rules.")
     public String clearBlockedRequests() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearBlockedRequests();
@@ -227,7 +237,8 @@ public class NetworkTools {
             Integer downloadThroughputKbps,
             @McpToolParam(description = "Simulated upload throughput in kb/s. Use -1 for no limit. Defaults to -1.", required = false)
             Integer uploadThroughputKbps) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.setNetworkConditions(Boolean.TRUE.equals(offline), latencyMillis == null ? 0 : latencyMillis,
@@ -244,7 +255,8 @@ public class NetworkTools {
 
     @McpTool(description = "Get the currently simulated network conditions.")
     public String getNetworkConditions() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getNetworkConditions();
@@ -258,7 +270,8 @@ public class NetworkTools {
 
     @McpTool(description = "Reset simulated network conditions back to normal (no throttling, online).")
     public String clearNetworkConditions() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearNetworkConditions();
@@ -278,7 +291,8 @@ public class NetworkTools {
             String username,
             @McpToolParam(description = "Password to supply for HTTP Basic auth challenges.", required = true)
             String password) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.setBasicAuthCredentials(username, password);
@@ -294,7 +308,8 @@ public class NetworkTools {
     @McpTool(description = "Start capturing browser console output (console.log/warn/error and similar). Requires "
             + "Chrome or Edge. Call getConsoleLogs to read captured entries.")
     public String startConsoleCapture() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.startConsoleCapture();
@@ -314,7 +329,8 @@ public class NetworkTools {
             String type,
             @McpToolParam(description = "Max number of entries to return, most recent. Defaults to 100.", required = false)
             Integer limit) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 List<ConsoleLogMonitor.ConsoleLogEntry> entries =
@@ -330,7 +346,8 @@ public class NetworkTools {
 
     @McpTool(description = "Clear captured console log entries without stopping capture.")
     public String clearConsoleLogs() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearConsoleLogs();

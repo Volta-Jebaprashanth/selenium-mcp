@@ -16,10 +16,10 @@ import java.util.stream.Collectors;
 @ToolGroup("cookies")
 public class CookieTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public CookieTools(Tools tools) {
-        this.tools = tools;
+    public CookieTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Add a cookie on the current domain.")
@@ -28,7 +28,8 @@ public class CookieTools {
             @McpToolParam(description = "Cookie value", required = true) String value,
             @McpToolParam(description = "Cookie domain. Defaults to the current domain.", required = false) String domain,
             @McpToolParam(description = "Cookie path. Defaults to /.", required = false) String path) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 if (domain == null && path == null) {
@@ -46,7 +47,8 @@ public class CookieTools {
     @McpTool(description = "Get a single cookie by name from the current domain.")
     public String getCookie(
             @McpToolParam(description = "Cookie name", required = true) String name) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Cookie cookie = tools.getCookie(name);
@@ -59,7 +61,8 @@ public class CookieTools {
 
     @McpTool(description = "Get all cookies visible to the current page.")
     public String getAllCookies() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Set<Cookie> cookies = tools.getAllCookies();
@@ -74,7 +77,8 @@ public class CookieTools {
     @McpTool(description = "Delete a single cookie by name.")
     public String deleteCookie(
             @McpToolParam(description = "Cookie name", required = true) String name) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.deleteCookie(name);
@@ -87,7 +91,8 @@ public class CookieTools {
 
     @McpTool(description = "Delete all cookies visible to the current page.")
     public String deleteAllCookies() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.deleteAllCookies();

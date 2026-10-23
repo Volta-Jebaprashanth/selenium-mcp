@@ -21,10 +21,10 @@ public class WaitTools {
             "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName";
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public WaitTools(Tools tools) {
-        this.tools = tools;
+    public WaitTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Wait until an element is visible on the page, up to the given timeout.")
@@ -32,7 +32,8 @@ public class WaitTools {
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForVisible(locatorType, locatorValue, resolveTimeout(timeoutSeconds));
@@ -48,7 +49,8 @@ public class WaitTools {
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForClickable(locatorType, locatorValue, resolveTimeout(timeoutSeconds));
@@ -64,7 +66,8 @@ public class WaitTools {
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForPresent(locatorType, locatorValue, resolveTimeout(timeoutSeconds));
@@ -80,7 +83,8 @@ public class WaitTools {
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForInvisible(locatorType, locatorValue, resolveTimeout(timeoutSeconds));
@@ -97,7 +101,8 @@ public class WaitTools {
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = "The text expected to appear in the element", required = true) String text,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForTextPresent(locatorType, locatorValue, text, resolveTimeout(timeoutSeconds));
@@ -112,7 +117,8 @@ public class WaitTools {
     public String waitForTitleContains(
             @McpToolParam(description = "The text expected to appear in the page title", required = true) String text,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForTitleContains(text, resolveTimeout(timeoutSeconds));
@@ -127,7 +133,8 @@ public class WaitTools {
     public String waitForUrlContains(
             @McpToolParam(description = "The text expected to appear in the URL", required = true) String text,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForUrlContains(text, resolveTimeout(timeoutSeconds));
@@ -141,7 +148,8 @@ public class WaitTools {
     @McpTool(description = "Wait until the page has finished loading (document.readyState is \"complete\"), up to the given timeout.")
     public String waitForPageLoad(
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForPageLoad(resolveTimeout(timeoutSeconds));
@@ -158,7 +166,8 @@ public class WaitTools {
     public String waitForJsCondition(
             @McpToolParam(description = "JavaScript expression or \"return ...\" statement that should evaluate truthy", required = true) String script,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForJsCondition(script, resolveTimeout(timeoutSeconds));
@@ -175,7 +184,8 @@ public class WaitTools {
             @McpToolParam(description = "The locator value to find the elements", required = true) String locatorValue,
             @McpToolParam(description = "The expected number of matching elements", required = true) Integer expectedCount,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForElementCount(locatorType, locatorValue, expectedCount, resolveTimeout(timeoutSeconds));
@@ -193,7 +203,8 @@ public class WaitTools {
             @McpToolParam(description = "The attribute or DOM property name to check", required = true) String attribute,
             @McpToolParam(description = "The expected value of the attribute", required = true) String expectedValue,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForAttributeToBe(locatorType, locatorValue, attribute, expectedValue, resolveTimeout(timeoutSeconds));
@@ -209,7 +220,8 @@ public class WaitTools {
     public String waitForNumberOfWindowsToBe(
             @McpToolParam(description = "The expected number of open windows/tabs", required = true) Integer expectedCount,
             @McpToolParam(description = "Max seconds to wait. Defaults to 10.", required = false) Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForNumberOfWindowsToBe(expectedCount, resolveTimeout(timeoutSeconds));

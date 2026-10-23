@@ -12,16 +12,17 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
 @ToolGroup("frames")
 public class FrameTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public FrameTools(Tools tools) {
-        this.tools = tools;
+    public FrameTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Switch the driver's focus to a frame/iframe by its zero-based index on the page.")
     public String switchToFrameByIndex(
             @McpToolParam(description = "Zero-based index of the frame", required = true) Integer index) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.switchToFrameByIndex(index);
@@ -35,7 +36,8 @@ public class FrameTools {
     @McpTool(description = "Switch the driver's focus to a frame/iframe by its name or id attribute.")
     public String switchToFrameByNameOrId(
             @McpToolParam(description = "The name or id attribute of the frame", required = true) String nameOrId) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.switchToFrameByNameOrId(nameOrId);
@@ -50,7 +52,8 @@ public class FrameTools {
     public String switchToFrame(
             @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the frame element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.switchToFrame(locatorType, locatorValue);
@@ -63,7 +66,8 @@ public class FrameTools {
 
     @McpTool(description = "Switch the driver's focus back to the main document, out of any frames.")
     public String switchToDefaultContent() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.switchToDefaultContent();
@@ -76,7 +80,8 @@ public class FrameTools {
 
     @McpTool(description = "Switch the driver's focus to the parent frame of the current frame.")
     public String switchToParentFrame() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.switchToParentFrame();

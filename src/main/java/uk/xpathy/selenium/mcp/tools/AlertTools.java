@@ -12,15 +12,16 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
 @ToolGroup("alerts")
 public class AlertTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public AlertTools(Tools tools) {
-        this.tools = tools;
+    public AlertTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Accept (click OK on) the currently open alert/confirm/prompt dialog.")
     public String acceptAlert() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.acceptAlert();
@@ -33,7 +34,8 @@ public class AlertTools {
 
     @McpTool(description = "Dismiss (click Cancel on) the currently open alert/confirm/prompt dialog.")
     public String dismissAlert() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.dismissAlert();
@@ -46,7 +48,8 @@ public class AlertTools {
 
     @McpTool(description = "Get the text of the currently open alert/confirm/prompt dialog.")
     public String getAlertText() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getAlertText();
@@ -59,7 +62,8 @@ public class AlertTools {
     @McpTool(description = "Type text into a JavaScript prompt dialog.")
     public String sendKeysToAlert(
             @McpToolParam(description = "The text to type into the prompt", required = true) String text) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.sendKeysToAlert(text);
@@ -72,7 +76,8 @@ public class AlertTools {
 
     @McpTool(description = "Check whether a JavaScript alert/confirm/prompt dialog is currently open.")
     public String isAlertPresent() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             return String.valueOf(tools.isAlertPresent());
         }

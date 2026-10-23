@@ -16,10 +16,10 @@ public class ActionsTools {
     private static final String LOCATOR_TYPE_DESC =
             "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName";
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public ActionsTools(Tools tools) {
-        this.tools = tools;
+    public ActionsTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Move the mouse over an element (hover), e.g. to reveal a dropdown menu.")
@@ -28,7 +28,8 @@ public class ActionsTools {
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
             @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.hover(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
@@ -45,7 +46,8 @@ public class ActionsTools {
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
             @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.doubleClick(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
@@ -62,7 +64,8 @@ public class ActionsTools {
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
             @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.rightClick(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
@@ -77,7 +80,8 @@ public class ActionsTools {
     public String clickAndHold(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clickAndHold(locatorType, locatorValue);
@@ -90,7 +94,8 @@ public class ActionsTools {
 
     @McpTool(description = "Release a previously held left mouse button (see clickAndHold).")
     public String releaseClick() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.release();
@@ -107,7 +112,8 @@ public class ActionsTools {
             @McpToolParam(description = "Locator value for the source element", required = true) String sourceLocatorValue,
             @McpToolParam(description = "Locator strategy for the target element", required = true) String targetLocatorType,
             @McpToolParam(description = "Locator value for the target element", required = true) String targetLocatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.dragAndDrop(sourceLocatorType, sourceLocatorValue, targetLocatorType, targetLocatorValue);
@@ -124,7 +130,8 @@ public class ActionsTools {
             @McpToolParam(description = "The locator value to find the element", required = true) String locatorValue,
             @McpToolParam(description = "Horizontal pixels to drag by", required = true) Integer xOffset,
             @McpToolParam(description = "Vertical pixels to drag by", required = true) Integer yOffset) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.dragAndDropByOffset(locatorType, locatorValue, xOffset, yOffset);
@@ -138,7 +145,8 @@ public class ActionsTools {
     @McpTool(description = "Send a single named key (e.g. ENTER, TAB, ESCAPE, ARROW_DOWN) to whichever element currently has focus.")
     public String pressKey(
             @McpToolParam(description = "Key name matching a Selenium Keys constant, e.g. ENTER, TAB, ESCAPE", required = true) String keyName) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.pressKey(keyName);

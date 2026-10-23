@@ -140,11 +140,22 @@ Groups: `actions`, `alerts`, `api`, `cookies`, `elements`, `files`, `frames`, `n
 "args": ["-jar", "/absolute/path/to/selenium-mcp.jar", "--selenium.mcp.exclude-tool-groups=api,network,cookies,alerts,select,files"]
 ```
 
-Or allow-list instead: `--selenium.mcp.tool-groups=elements,page-source,wait,script,screenshots`. The exclude example above takes the server from 116 tools to 75.
+Or allow-list instead: `--selenium.mcp.tool-groups=elements,page-source,wait,script,screenshots`. The exclude example above takes the server from 118 tools to 77.
+
+### Running several browsers
+
+One server can drive several browsers at once, e.g. an admin and a customer logged in side by side, or several debug browsers that tests failed in. Each browser is a named **session** with its own cookies, network mocks and console log. Every tool acts on the **active** session, so tool signatures stay the same:
+
+1. The first `openBrowser`/`connectToBrowser`/`launchDebugBrowser` creates the session `default`.
+2. To open another alongside it, pass a `session` name, e.g. `openBrowser(session: "admin")`. The new session becomes active. An unnamed open while a browser is already open is refused rather than silently reusing or adding a browser.
+3. `switchSession` changes the active session; `listSessions` shows them all.
+4. `closeBrowser` closes the active session (or `session: "<name>"`, or `all: true`), and the most recently opened remaining session becomes active.
+
+While more than one session is open, navigation, `click`, `sendKeys`, `getTitle` and `getCurrentUrl` results are prefixed with the session name, e.g. `[admin] Navigated to ...`. Tool calls still run one at a time. At most 5 sessions can be open; raise that with `--selenium.mcp.max-sessions=<n>`. All sessions are closed when the server shuts down.
 
 ## Available tools
 
-For the full searchable tool surface (116 tools across 16 categories) with parameters and examples, see the [MCP Tools Reference](https://selenium-mcp.xpathy.uk/docs/tools) on the docs site. Summary by category below.
+For the full searchable tool surface (118 tools across 16 categories) with parameters and examples, see the [MCP Tools Reference](https://selenium-mcp.xpathy.uk/docs/tools) on the docs site. Summary by category below.
 
 Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpath`, `className`/`class`, `linkText`, `partialLinkText`, `tagName`/`tag`.
 
@@ -156,10 +167,12 @@ Errors come back as the driver's one-line message (e.g. `Script error: javascrip
 
 | Tool | Description |
 |---|---|
-| `openBrowser` | Opens a browser window (`chrome`, `firefox`, or `edge`; defaults to `chrome`), with optional `headless`, `incognito`, `windowSize` (e.g. `1920x1080`), and `userAgent`. Reuses an already-open browser. |
-| `connectToBrowser` | Connects to a Chrome/Edge that is already running with remote debugging (`--remote-debugging-port=<port>` plus a separate `--user-data-dir`), via `debuggerAddress` (defaults to `127.0.0.1:9222`). |
-| `launchDebugBrowser` | Launches Chrome/Edge with remote debugging on `port` (default `9222`) and connects to it. The browser keeps running after `closeBrowser`, so test code can attach to the same browser with `ChromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9222")`. Useful for letting an agent inspect the live page where a test failed. If something is already listening on the port, connects to it instead. |
-| `closeBrowser` | Closes the open browser and releases the driver. A browser connected via `connectToBrowser`/`launchDebugBrowser` is only disconnected and keeps running. |
+| `openBrowser` | Opens a browser window (`chrome`, `firefox`, or `edge`; defaults to `chrome`), with optional `headless`, `incognito`, `windowSize` (e.g. `1920x1080`), and `userAgent`. Reuses an already-open browser, unless a new `session` name is given (see [Running several browsers](#running-several-browsers)). |
+| `connectToBrowser` | Connects to a Chrome/Edge that is already running with remote debugging (`--remote-debugging-port=<port>` plus a separate `--user-data-dir`), via `debuggerAddress` (defaults to `127.0.0.1:9222`). Takes an optional `session` name. |
+| `launchDebugBrowser` | Launches Chrome/Edge with remote debugging on `port` (default `9222`) and connects to it. The browser keeps running after `closeBrowser`, so test code can attach to the same browser with `ChromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9222")`. Useful for letting an agent inspect the live page where a test failed. If something is already listening on the port, connects to it instead. Takes an optional `session` name; without a `port`, a second debug browser gets the next free one (`9223`, ...). |
+| `closeBrowser` | Closes the active browser session and releases the driver, or the one named by `session`, or every session with `all`. A browser connected via `connectToBrowser`/`launchDebugBrowser` is only disconnected and keeps running. |
+| `listSessions` | Lists the open browser sessions (name, browser, attached address, current URL) and marks the active one. |
+| `switchSession` | Makes another open session the active one, so all tools act on its browser. |
 | `navigate` | Navigates the open browser to a URL. |
 | `back` / `forward` / `refresh` | Browser history navigation. |
 | `getCurrentUrl` | Returns the URL of the current page. |
@@ -333,8 +346,8 @@ Headers are passed as a JSON object string, e.g. `{"Authorization": "Bearer xyz"
 src/main/java/uk/xpathy/selenium/mcp/
 ├── McpServerApplication.java     # Spring Boot entry point
 ├── tools/                        # @McpTool-annotated classes — the MCP-facing surface
-│   ├── ToolsConfig.java           # Produces the single shared Tools bean
-│   ├── BrowserTools.java          # Lifecycle, navigation, click/sendKeys
+│   ├── BrowserSessions.java       # Named browser sessions and which one is active
+│   ├── BrowserTools.java          # Sessions, lifecycle, navigation, click/sendKeys
 │   ├── PageSourceTools.java       # Token-efficient JSON views of the page: scripts, styles, element tree, filtered element queries
 │   ├── ElementQueryTools.java     # Read-only element state queries
 │   ├── WaitTools.java             # Explicit waits

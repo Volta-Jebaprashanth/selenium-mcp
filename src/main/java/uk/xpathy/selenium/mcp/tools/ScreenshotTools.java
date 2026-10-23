@@ -13,10 +13,10 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
 @ToolGroup("screenshots")
 public class ScreenshotTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public ScreenshotTools(Tools tools) {
-        this.tools = tools;
+    public ScreenshotTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Take a screenshot of the current page. By default captures only the visible viewport; "
@@ -28,7 +28,8 @@ public class ScreenshotTools {
             String filePath,
             @McpToolParam(description = "Capture the entire scrollable page instead of just the viewport. Defaults to false.", required = false)
             Boolean fullPage) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             boolean full = Boolean.TRUE.equals(fullPage);
             try {
@@ -59,7 +60,8 @@ public class ScreenshotTools {
             String filePath,
             @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
             @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 if (filePath == null || filePath.isBlank()) {

@@ -17,10 +17,10 @@ public class SelectTools {
     private static final String LOCATOR_TYPE_DESC =
             "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName";
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public SelectTools(Tools tools) {
-        this.tools = tools;
+    public SelectTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Select an option from a dropdown by its visible text.")
@@ -28,7 +28,8 @@ public class SelectTools {
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the <select> element", required = true) String locatorValue,
             @McpToolParam(description = "The visible text of the option to select", required = true) String text) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.selectByVisibleText(locatorType, locatorValue, text);
@@ -44,7 +45,8 @@ public class SelectTools {
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the <select> element", required = true) String locatorValue,
             @McpToolParam(description = "The value attribute of the option to select", required = true) String optionValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.selectByValue(locatorType, locatorValue, optionValue);
@@ -60,7 +62,8 @@ public class SelectTools {
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the <select> element", required = true) String locatorValue,
             @McpToolParam(description = "Zero-based index of the option to select", required = true) Integer index) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.selectByIndex(locatorType, locatorValue, index);
@@ -75,7 +78,8 @@ public class SelectTools {
     public String deselectAllOptions(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the <select> element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.deselectAllOptions(locatorType, locatorValue);
@@ -90,7 +94,8 @@ public class SelectTools {
     public String getSelectedOptionsText(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the <select> element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 List<String> texts = tools.getSelectedOptionsText(locatorType, locatorValue);
@@ -105,7 +110,8 @@ public class SelectTools {
     public String isMultipleSelect(
             @McpToolParam(description = LOCATOR_TYPE_DESC, required = true) String locatorType,
             @McpToolParam(description = "The locator value to find the <select> element", required = true) String locatorValue) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return String.valueOf(tools.isMultipleSelect(locatorType, locatorValue));

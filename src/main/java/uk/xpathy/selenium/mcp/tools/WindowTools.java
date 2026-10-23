@@ -16,15 +16,16 @@ import java.util.stream.Collectors;
 @ToolGroup("window")
 public class WindowTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public WindowTools(Tools tools) {
-        this.tools = tools;
+    public WindowTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Maximize the current browser window.")
     public String maximizeWindow() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.maximizeWindow();
@@ -37,7 +38,8 @@ public class WindowTools {
 
     @McpTool(description = "Minimize the current browser window.")
     public String minimizeWindow() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.minimizeWindow();
@@ -50,7 +52,8 @@ public class WindowTools {
 
     @McpTool(description = "Make the current browser window fullscreen.")
     public String fullscreenWindow() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.fullscreenWindow();
@@ -65,7 +68,8 @@ public class WindowTools {
     public String setWindowSize(
             @McpToolParam(description = "Window width in pixels", required = true) Integer width,
             @McpToolParam(description = "Window height in pixels", required = true) Integer height) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.setWindowSize(width, height);
@@ -78,7 +82,8 @@ public class WindowTools {
 
     @McpTool(description = "Get the current browser window's size.")
     public String getWindowSize() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Dimension size = tools.getWindowSize();
@@ -93,7 +98,8 @@ public class WindowTools {
     public String setWindowPosition(
             @McpToolParam(description = "X coordinate in pixels", required = true) Integer x,
             @McpToolParam(description = "Y coordinate in pixels", required = true) Integer y) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.setWindowPosition(x, y);
@@ -106,7 +112,8 @@ public class WindowTools {
 
     @McpTool(description = "Get the handle of the currently focused window/tab.")
     public String getWindowHandle() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getWindowHandle();
@@ -118,7 +125,8 @@ public class WindowTools {
 
     @McpTool(description = "Get the handles of all open windows/tabs.")
     public String getWindowHandles() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Set<String> handles = tools.getWindowHandles();
@@ -132,7 +140,8 @@ public class WindowTools {
     @McpTool(description = "Switch the driver's focus to the window/tab with the given handle. Use getWindowHandles to list handles.")
     public String switchToWindow(
             @McpToolParam(description = "The window handle to switch to", required = true) String handle) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.switchToWindow(handle);
@@ -145,7 +154,8 @@ public class WindowTools {
 
     @McpTool(description = "Open a new browser tab and switch focus to it.")
     public String openNewTab() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 String handle = tools.openNewTab();
@@ -158,7 +168,8 @@ public class WindowTools {
 
     @McpTool(description = "Close the currently focused window/tab. Does not release the driver — use closeBrowser for that.")
     public String closeCurrentWindow() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.closeCurrentWindow();
