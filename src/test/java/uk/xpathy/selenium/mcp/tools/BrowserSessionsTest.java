@@ -1,6 +1,8 @@
 package uk.xpathy.selenium.mcp.tools;
 
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.NoSuchSessionException;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.service.DriverService;
 import uk.xpathy.selenium.mcp.webdriver.AttachedDriver;
@@ -25,12 +27,13 @@ class BrowserSessionsTest {
     private final BrowserFactory factory = mock(BrowserFactory.class);
     private final WebDriver first = mock(WebDriver.class);
     private final WebDriver second = mock(WebDriver.class);
+    private final WebDriver third = mock(WebDriver.class);
     private final BrowserSessions sessions = new BrowserSessions(factory, 3);
     private final BrowserTools browserTools = new BrowserTools(sessions);
 
     BrowserSessionsTest() {
         when(factory.resolveName(any())).thenAnswer(call -> call.getArgument(0) == null ? "chrome" : call.getArgument(0));
-        when(factory.create(any(), any())).thenReturn(first, second);
+        when(factory.create(any(), any())).thenReturn(first, second, third);
         when(factory.normalizeDebuggerAddress(anyString())).thenAnswer(call -> call.getArgument(0));
         when(first.getCurrentUrl()).thenReturn("https://one.example/");
         when(second.getCurrentUrl()).thenReturn("https://two.example/");
@@ -141,6 +144,46 @@ class BrowserSessionsTest {
         String launched = browserTools.launchDebugBrowser("chrome", null, null, "second");
 
         assertTrue(launched.startsWith("Launched chrome with remote debugging on 127.0.0.1:9223 as session 'second'"), launched);
+    }
+
+    @Test
+    void aBrowserClosedByHandIsReportedThenDroppedSoItCanBeReopened() {
+        open(null, null);
+        open(null, "other");
+        browserTools.switchSession("default");
+        NoSuchSessionException gone = new NoSuchSessionException("invalid session id");
+        when(first.getWindowHandles()).thenThrow(gone);
+        when(first.getTitle()).thenThrow(gone);
+
+        assertEquals("Failed to get the title: invalid session id" + ErrorMessages.BROWSER_GONE_HINT, browserTools.getTitle());
+
+        assertEquals("Session 'default' was removed: the browser is no longer reachable (closed or crashed).\n"
+                + "chrome browser opened as session 'default'.", open(null, "default"));
+        verify(first).quit();
+        assertEquals(List.of("other", "default"), List.copyOf(sessions.all().keySet()));
+        assertEquals("default", sessions.activeName());
+    }
+
+    @Test
+    void whenTheActiveBrowserDiesTheMostRecentRemainingSessionBecomesActive() {
+        open(null, null);
+        open(null, "other");
+        when(second.getWindowHandles()).thenThrow(new NoSuchSessionException("invalid session id"));
+
+        String listing = browserTools.listSessions();
+
+        assertTrue(listing.startsWith("Session 'other' was removed"), listing);
+        assertTrue(listing.contains("* default: chrome"), listing);
+        assertEquals("default", sessions.activeName());
+    }
+
+    @Test
+    void aSlowOrFailingCheckDoesNotCountAsDead() {
+        open(null, null);
+        when(first.getWindowHandles()).thenThrow(new TimeoutException("timed out"));
+
+        assertEquals(List.of(), sessions.pruneDead());
+        assertTrue(sessions.has("default"));
     }
 
     private String open(String browser, String session) {

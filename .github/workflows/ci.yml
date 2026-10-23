@@ -35,8 +35,11 @@ jobs:
       - name: Build
         run: mvn -B clean package
 
-      - name: Test
-        run: mvn -B test
+      # Unit tests already ran in the Build step; this adds the tests that drive the Chrome
+      # preinstalled on the runner. A failure here after a runner image update usually means
+      # Chrome has outpaced the pinned Selenium's CDP support - bump selenium.version.
+      - name: Test against headless Chrome
+        run: mvn -B test -Dselenium.it=true
 
       - name: Determine release version
         id: version

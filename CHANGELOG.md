@@ -21,7 +21,9 @@ once it reaches a 1.0.0 release.
 
 ### Changed
 
-- Browsers are closed (attached ones disconnected) when the server shuts down, instead of being left running.
+- Browsers are closed (attached ones disconnected) when the server shuts down, instead of being left running. On Windows the npm launcher now runs the server detached and feeds it stdin, so a client killing the launcher no longer kills the server mid-flight and orphans chromedriver and browser processes.
+- A browser that was closed by hand or crashed no longer stays "open": tool errors say the browser is gone and what to do, and `openBrowser`/`connectToBrowser`/`launchDebugBrowser`/`listSessions`/`switchSession` drop the dead session.
+- CI runs the headless Chrome integration tests on every build.
 - `navigate`, `back`, `forward`, `refresh`, `getCurrentUrl`, `getTitle` and `getPageSource` return an error message instead of throwing when the browser fails.
 - Tool error messages are now the driver's own message only, without Selenium's build/system/capabilities/session diagnostics.
 - `executeScript` returns objects and arrays as JSON instead of Java `toString()` output.

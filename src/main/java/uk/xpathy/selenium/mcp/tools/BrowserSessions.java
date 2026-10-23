@@ -133,14 +133,28 @@ public class BrowserSessions {
      * becomes active.
      */
     public synchronized void close(String name) {
-        Tools tools = sessions.remove(name);
-        if (tools == null) {
-            return;
+        Tools tools = remove(name);
+        if (tools != null) {
+            tools.closeBrowser();
         }
-        if (name.equals(activeName)) {
-            activeName = sessions.isEmpty() ? null : new ArrayList<>(sessions.keySet()).getLast();
+    }
+
+    /**
+     * Forgets the sessions whose browser has gone away - its last window closed by hand, or its process
+     * crashed - releasing their drivers. If the active session was one of them, the most recently opened
+     * remaining session becomes active, as with {@link #close(String)}.
+     *
+     * @return the names of the sessions removed
+     */
+    public synchronized List<String> pruneDead() {
+        List<String> dead = sessions.entrySet().stream()
+                .filter(entry -> !entry.getValue().isBrowserAlive())
+                .map(Map.Entry::getKey)
+                .toList();
+        for (String name : dead) {
+            closeQuietly(remove(name));
         }
-        tools.closeBrowser();
+        return dead;
     }
 
     /**
@@ -178,6 +192,14 @@ public class BrowserSessions {
      */
     public synchronized String label() {
         return sessions.size() > 1 && activeName != null ? "[" + activeName + "] " : "";
+    }
+
+    private Tools remove(String name) {
+        Tools tools = sessions.remove(name);
+        if (tools != null && name.equals(activeName)) {
+            activeName = sessions.isEmpty() ? null : new ArrayList<>(sessions.keySet()).getLast();
+        }
+        return tools;
     }
 
     private static void closeQuietly(Tools tools) {

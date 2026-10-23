@@ -50,20 +50,21 @@ public class BrowserTools {
             @McpToolParam(description = SESSION_DESC, required = false)
             String session) {
         synchronized (sessions) {
+            String note = pruneDeadSessions();
             String name = newSessionName(session);
             String refusal = refuseNewSession(name, "open another browser");
             if (refusal != null) {
-                return refusal;
+                return note + refusal;
             }
             try {
                 BrowserOptions options = new BrowserOptions(
                         Boolean.TRUE.equals(headless), Boolean.TRUE.equals(incognito), windowSize, userAgent);
                 Tools tools = sessions.open(name, t -> t.openBrowser(browser, options));
-                return tools.getBrowserName() + " browser opened" + sessionSuffix(name) + ".";
+                return note + tools.getBrowserName() + " browser opened" + sessionSuffix(name) + ".";
             } catch (IllegalArgumentException e) {
-                return ErrorMessages.of(e);
+                return note + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to open the browser: " + ErrorMessages.of(e);
+                return note + "Failed to open the browser: " + ErrorMessages.of(e);
             }
         }
     }
@@ -81,23 +82,24 @@ public class BrowserTools {
             @McpToolParam(description = SESSION_DESC, required = false)
             String session) {
         synchronized (sessions) {
+            String note = pruneDeadSessions();
             String name = newSessionName(session);
             String refusal = refuseNewSession(name, "connect to another browser");
             if (refusal != null) {
-                return refusal;
+                return note + refusal;
             }
             try {
                 String owner = sessions.sessionAttachedTo(debuggerAddress);
                 if (owner != null) {
-                    return "Session '" + owner + "' is already connected to that browser. Call switchSession to use it.";
+                    return note + "Session '" + owner + "' is already connected to that browser. Call switchSession to use it.";
                 }
                 Tools tools = sessions.open(name, t -> t.attachBrowser(browser, debuggerAddress));
-                return "Connected to " + tools.getBrowserName() + " at " + tools.getDebuggerAddress() + sessionSuffix(name)
+                return note + "Connected to " + tools.getBrowserName() + " at " + tools.getDebuggerAddress() + sessionSuffix(name)
                         + " (current page: " + tools.getCurrentUrl() + "). closeBrowser will disconnect and leave it running.";
             } catch (IllegalArgumentException | IllegalStateException e) {
-                return ErrorMessages.of(e);
+                return note + ErrorMessages.of(e);
             } catch (WebDriverException e) {
-                return "Failed to connect to the browser: " + ErrorMessages.of(e);
+                return note + "Failed to connect to the browser: " + ErrorMessages.of(e);
             }
         }
     }
@@ -120,33 +122,34 @@ public class BrowserTools {
             @McpToolParam(description = SESSION_DESC, required = false)
             String session) {
         synchronized (sessions) {
+            String note = pruneDeadSessions();
             String name = newSessionName(session);
             String refusal = refuseNewSession(name, "launch another debug browser");
             if (refusal != null) {
-                return refusal;
+                return note + refusal;
             }
             try {
                 int debugPort = port != null ? port : firstPortWithoutSession();
                 String address = "127.0.0.1:" + debugPort;
                 String owner = sessions.sessionAttachedTo(address);
                 if (owner != null) {
-                    return "Session '" + owner + "' is already connected to port " + debugPort
+                    return note + "Session '" + owner + "' is already connected to port " + debugPort
                             + ". Call switchSession to use it, or pass a different port.";
                 }
                 if (sessions.active().isDebuggerListening(address)) {
                     Tools tools = sessions.open(name, t -> t.attachBrowser(browser, address));
-                    return "A browser was already listening on " + address + "; connected to "
+                    return note + "A browser was already listening on " + address + "; connected to "
                             + tools.getBrowserName() + " there" + sessionSuffix(name)
                             + " (current page: " + tools.getCurrentUrl() + ").";
                 }
                 sessions.open(name, t -> t.launchDebugBrowser(browser, debugPort, userDataDir));
-                return "Launched " + sessions.active().getBrowserName() + " with remote debugging on " + address
+                return note + "Launched " + sessions.active().getBrowserName() + " with remote debugging on " + address
                         + sessionSuffix(name) + ". Test code can attach with debuggerAddress " + address
                         + ". closeBrowser will disconnect and leave it running.";
             } catch (IllegalArgumentException | IllegalStateException e) {
-                return ErrorMessages.of(e);
+                return note + ErrorMessages.of(e);
             } catch (WebDriverException e) {
-                return "Failed to launch the debug browser: " + ErrorMessages.of(e);
+                return note + "Failed to launch the debug browser: " + ErrorMessages.of(e);
             }
         }
     }
@@ -155,9 +158,10 @@ public class BrowserTools {
             + "a debugging port, and current URL - and which one is active.")
     public String listSessions() {
         synchronized (sessions) {
+            String note = pruneDeadSessions();
             Map<String, Tools> all = sessions.all();
             if (all.isEmpty()) {
-                return NO_BROWSER;
+                return note + NO_BROWSER;
             }
             StringBuilder sb = new StringBuilder();
             all.forEach((name, tools) -> {
@@ -168,7 +172,7 @@ public class BrowserTools {
                 }
                 sb.append(", ").append(currentUrlOf(tools)).append('\n');
             });
-            return sb.append("(* = active session)").toString();
+            return note + sb.append("(* = active session)").toString();
         }
     }
 
@@ -177,11 +181,12 @@ public class BrowserTools {
             @McpToolParam(description = "Name of the session to switch to, as shown by listSessions", required = true)
             String session) {
         synchronized (sessions) {
+            String note = pruneDeadSessions();
             if (session == null || !sessions.switchTo(session.strip())) {
-                return "No session named '" + session + "'. " + openSessionNames();
+                return note + "No session named '" + session + "'. " + openSessionNames();
             }
             Tools tools = sessions.active();
-            return "Switched to session '" + sessions.activeName() + "' (" + tools.getBrowserName() + ", "
+            return note + "Switched to session '" + sessions.activeName() + "' (" + tools.getBrowserName() + ", "
                     + currentUrlOf(tools) + ").";
         }
     }
@@ -380,6 +385,21 @@ public class BrowserTools {
                 return "Failed to send keys: " + ErrorMessages.of(e);
             }
         }
+    }
+
+    /**
+     * Drops sessions whose browser has gone away, so a browser closed by hand doesn't keep blocking or
+     * answering for its session.
+     *
+     * @return a note telling the client which sessions were removed, or an empty string
+     */
+    private String pruneDeadSessions() {
+        List<String> dead = sessions.pruneDead();
+        if (dead.isEmpty()) {
+            return "";
+        }
+        return (dead.size() == 1 ? "Session '" + dead.getFirst() + "' was" : "Sessions " + String.join(", ", dead) + " were")
+                + " removed: the browser is no longer reachable (closed or crashed).\n";
     }
 
     /**

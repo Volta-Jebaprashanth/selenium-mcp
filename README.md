@@ -151,7 +151,7 @@ One server can drive several browsers at once, e.g. an admin and a customer logg
 3. `switchSession` changes the active session; `listSessions` shows them all.
 4. `closeBrowser` closes the active session (or `session: "<name>"`, or `all: true`), and the most recently opened remaining session becomes active.
 
-While more than one session is open, navigation, `click`, `sendKeys`, `getTitle` and `getCurrentUrl` results are prefixed with the session name, e.g. `[admin] Navigated to ...`. Tool calls still run one at a time. At most 5 sessions can be open; raise that with `--selenium.mcp.max-sessions=<n>`. All sessions are closed when the server shuts down.
+While more than one session is open, navigation, `click`, `sendKeys`, `getTitle` and `getCurrentUrl` results are prefixed with the session name, e.g. `[admin] Navigated to ...`. Tool calls still run one at a time. At most 5 sessions can be open; raise that with `--selenium.mcp.max-sessions=<n>`. All sessions are closed when the server shuts down. A session whose browser was closed by hand or crashed is dropped the next time `openBrowser`, `listSessions` or `switchSession` runs; until then, tools on it answer that the browser is no longer reachable.
 
 ## Available tools
 

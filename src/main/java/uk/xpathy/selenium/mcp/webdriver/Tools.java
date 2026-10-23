@@ -79,6 +79,14 @@ public class Tools {
         return session.isOpen();
     }
 
+    /**
+     * Like {@link #isBrowserOpen()}, but also checks that the browser still responds - it is {@code false}
+     * once the browser's last window has been closed by hand or its process has died.
+     */
+    public boolean isBrowserAlive() {
+        return session.isAlive();
+    }
+
     public String getBrowserName() {
         return session.getBrowserName();
     }

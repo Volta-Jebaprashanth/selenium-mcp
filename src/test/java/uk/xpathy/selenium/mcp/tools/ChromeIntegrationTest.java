@@ -1,5 +1,7 @@
 package uk.xpathy.selenium.mcp.tools;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -156,6 +158,41 @@ class ChromeIntegrationTest {
         assertFalse(entries.isEmpty(), "fetch was not captured");
         assertEquals(200, entries.get(0).status());
         tools.stopNetworkCapture();
+    }
+
+    @Test
+    void networkMocksAndBlocksApplyToPageRequests() {
+        tools.mockResponse("/api/mocked", "GET", 418, "application/json", "{\"mocked\":true}", null);
+        tools.blockRequests("/api/blocked");
+        try {
+            assertEquals("418 {\"mocked\":true}", tools.executeScript(
+                    "return fetch('/api/mocked').then(r => r.text().then(t => r.status + ' ' + t))"));
+            String blocked = (String) tools.executeScript(
+                    "return fetch('/api/blocked').then(r => r.text().then(t => r.status + ' ' + t))");
+            assertTrue(blocked.startsWith("403 Blocked by selenium-mcp"), blocked);
+            assertEquals("{\"ok\":true}", tools.executeScript("return fetch('/api/ping').then(r => r.text())"));
+        } finally {
+            tools.clearMockResponses();
+            tools.clearBlockedRequests();
+        }
+    }
+
+    @Test
+    void pageElementsDescribeTheLivePage() throws Exception {
+        ObjectMapper json = new ObjectMapper();
+        assertTrue(tools.getPageElements(20).contains("\"first\""));
+
+        JsonNode filtered = json.readTree(tools.getPageElementsFiltered("css", ".b", true, false, false, 20, 2));
+        assertEquals(3, filtered.get("totalMatches").asInt());
+        assertEquals(2, filtered.get("returnedMatches").asInt());
+        assertTrue(filtered.get("truncated").asBoolean());
+    }
+
+    @Test
+    void browserToolsReportFailuresInsteadOfThrowing() {
+        String result = new BrowserTools(sessions).navigate("not a url");
+        assertTrue(result.startsWith("Failed to navigate: "), result);
+        assertFalse(result.contains("Build info"), result);
     }
 
     private static BufferedImage decode(String base64) throws Exception {

@@ -79,7 +79,11 @@ public class AlertTools {
         synchronized (sessions) {
             Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
-            return String.valueOf(tools.isAlertPresent());
+            try {
+                return String.valueOf(tools.isAlertPresent());
+            } catch (Exception e) {
+                return "Failed to check for an alert: " + ErrorMessages.of(e);
+            }
         }
     }
 }

@@ -1,6 +1,9 @@
 package uk.xpathy.selenium.mcp.webdriver;
 
+import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.remote.UnreachableBrowserException;
 import org.openqa.selenium.remote.service.DriverService;
 
 /**
@@ -33,6 +36,44 @@ public class BrowserSession {
 
     public boolean isOpen() {
         return driver != null;
+    }
+
+    /**
+     * Asks the browser for its windows to find out whether it is still there. Unlike {@link #isOpen()},
+     * this notices a browser whose last window was closed by hand, or whose process crashed.
+     *
+     * @return {@code false} if no browser is open or it has gone away (see {@link #isBrowserGone(Throwable)});
+     * {@code true} otherwise, including when the check fails for some other reason
+     */
+    public boolean isAlive() {
+        if (driver == null) {
+            return false;
+        }
+        try {
+            driver.getWindowHandles();
+            return true;
+        } catch (WebDriverException e) {
+            return !isBrowserGone(e);
+        }
+    }
+
+    /**
+     * @return whether {@code e} means the browser behind the session is gone for good, as opposed to
+     * one command failing
+     */
+    public static boolean isBrowserGone(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof NoSuchSessionException || t instanceof UnreachableBrowserException) {
+                return true;
+            }
+            if (t instanceof WebDriverException wde) {
+                String message = wde.getRawMessage();
+                if (message != null && (message.contains("not reachable") || message.startsWith("disconnected:"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
