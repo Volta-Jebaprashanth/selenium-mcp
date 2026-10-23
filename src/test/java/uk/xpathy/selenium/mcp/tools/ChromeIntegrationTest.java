@@ -42,8 +42,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EnabledIfSystemProperty(named = "selenium.it", matches = "true")
 class ChromeIntegrationTest {
 
+    // Every page carries an inline icon so Chrome never requests /favicon.ico. Once a network test arms
+    // the interceptor it stays armed for the shared browser, and on Linux Chrome never answers Selenium's
+    // Fetch.getResponseBody for that browser-initiated request: each page load then stalls on 30s CDP timeouts.
     private static final String PAGE = """
-            <!doctype html><html><head><title>it</title></head>
+            <!doctype html><html><head><link rel="icon" href="data:,"><title>it</title></head>
             <body style="margin:0">
               <button id="hidden" class="b" style="display:none" onclick="window.clicked='hidden'">h</button>
               <button id="first" class="b" onclick="window.clicked='first'">1</button>
@@ -53,7 +56,7 @@ class ChromeIntegrationTest {
             """;
 
     private static final String CONTROLS_PAGE = """
-            <!doctype html><html><head><title>Create Put</title></head><body>
+            <!doctype html><html><head><link rel="icon" href="data:,"><title>Create Put</title></head><body>
               <button id="save" disabled><span>Create Put</span></button>
               <button id="go"><span class="icon"></span> Go   now </button>
               <input id="nosave" type="submit" value="Don't save">
@@ -62,7 +65,7 @@ class ChromeIntegrationTest {
             """;
 
     private static final String OVERLAY_PAGE = """
-            <!doctype html><html><head><title>overlay</title></head><body>
+            <!doctype html><html><head><link rel="icon" href="data:,"><title>overlay</title></head><body>
               <button id="under" onclick="window.clicked='under'">Under</button>
               <div id="overlay" class="loading backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.3)"></div>
             </body></html>

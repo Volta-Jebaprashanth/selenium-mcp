@@ -38,8 +38,15 @@ jobs:
       # Unit tests already ran in the Build step; this adds the tests that drive the Chrome
       # preinstalled on the runner. A failure here after a runner image update usually means
       # Chrome has outpaced the pinned Selenium's CDP support - bump selenium.version.
+      # A WebDriver call that never answers would otherwise wait out Selenium's 3-minute read
+      # timeout per command and then the 6-hour job limit; the per-test timeout fails the stuck
+      # test by name, with its stack trace, and the step limit backstops anything outside a test.
       - name: Test against headless Chrome
-        run: mvn -B test -Dselenium.it=true
+        timeout-minutes: 10
+        run: >-
+          mvn -B test -Dselenium.it=true
+          -Djunit.jupiter.execution.timeout.default=2m
+          -Djunit.jupiter.execution.timeout.thread.mode.default=SEPARATE_THREAD
 
       - name: Determine release version
         id: version
