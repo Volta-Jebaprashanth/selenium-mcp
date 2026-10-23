@@ -10,6 +10,10 @@ once it reaches a 1.0.0 release.
 
 ### Added
 
+- `text` and `partialText` locator strategies: find an element by the words on screen, e.g. `text=Create Put`, without writing XPath.
+- `isClickable` tool, and `visible`/`enabled`/`clickable` flags (plus `coveredBy`) on interactive elements in `getPageElements` and on every match in `getPageElementsFiltered`. Clickable means displayed, enabled and not covered by another element such as a loading overlay.
+- `click` retries while another element intercepts the click, up to `waitIfCoveredSeconds` (default 5).
+- `index`/`visibleOnly` on every remaining single-element tool (element state and geometry queries, waits, select, `uploadFile`, `switchToFrame`, `clickAndHold`, `dragAndDropByOffset`), and `visibleOnly` on the tools that act on every match.
 - Multiple browser sessions: `openBrowser`, `connectToBrowser` and `launchDebugBrowser` take an optional `session` name to run several browsers at once (up to `--selenium.mcp.max-sessions`, default 5); new `listSessions` and `switchSession` tools; `closeBrowser` takes `session` and `all`. Every tool acts on the active session, and while several are open, status messages and every tool's failures start with `[session]` so they say which browser they came from.
 - npm distribution with a bundled Java runtime: `npx -y @xpathy/selenium-mcp`, no JDK install needed (Windows x64, Linux x64, macOS Intel/Apple Silicon). See the README's Quick start. The launcher repairs an npx cache that's missing its platform package, and releases are published via npm trusted publishing.
 - `takeScreenshot` `fullPage` option for capturing the whole scrollable page (Chrome/Edge via raw CDP, Firefox natively).
@@ -21,6 +25,8 @@ once it reaches a 1.0.0 release.
 
 ### Changed
 
+- `takeScreenshot` and `takeElementScreenshot` return the image as MCP image content instead of a base64 string, so clients can show it to the model directly. Images too large to send inline ask for `filePath` instead.
+- `waitForClickable` also waits until no other element covers the target, rather than stopping at visible + enabled.
 - Browsers are closed (attached ones disconnected) when the server shuts down, instead of being left running. On Windows the npm launcher now runs the server detached and feeds it stdin, so a client killing the launcher no longer kills the server mid-flight and orphans chromedriver and browser processes.
 - A browser that was closed by hand or crashed no longer stays "open": tool errors say the browser is gone and what to do, and `openBrowser`/`connectToBrowser`/`launchDebugBrowser`/`listSessions`/`switchSession` drop the dead session.
 - CI runs the headless Chrome integration tests on every build.

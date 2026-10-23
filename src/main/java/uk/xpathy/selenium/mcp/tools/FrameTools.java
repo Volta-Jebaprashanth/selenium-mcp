@@ -50,13 +50,15 @@ public class FrameTools {
 
     @McpTool(description = "Switch the driver's focus to a frame/iframe located by a strategy and value.")
     public String switchToFrame(
-            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true) String locatorType,
-            @McpToolParam(description = "The locator value to find the frame element", required = true) String locatorValue) {
+            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains)", required = true) String locatorType,
+            @McpToolParam(description = "The locator value to find the frame element", required = true) String locatorValue,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (sessions) {
             Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
-                tools.switchToFrame(locatorType, locatorValue);
+                tools.switchToFrame(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Switched to frame located by " + locatorType + "=" + locatorValue;
             } catch (Exception e) {
                 return sessions.label() + "Failed to switch frame: " + ErrorMessages.of(e);

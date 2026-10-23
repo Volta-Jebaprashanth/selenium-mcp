@@ -19,7 +19,7 @@ import java.util.Set;
  * Each concern lives in its own collaborator, wired together here rather than reached
  * through static helpers: {@link BrowserFactory} creates drivers, {@link BrowserSession}
  * owns the driver lifecycle, {@link Locators} resolves locator strategies, and the rest
- * ({@link Navigator}, {@link ElementInteractor}, {@link ElementInspector}, {@link WaitHelper},
+ * ({@link Navigator}, {@link ElementInteractor}, {@link ElementInspector}, {@link ClickabilityChecker}, {@link WaitHelper},
  * {@link AlertHandler}, {@link FrameHandler}, {@link WindowManager}, {@link CookieManager},
  * {@link ScreenshotTaker}, {@link ScriptRunner}, {@link ActionsHelper}, {@link SelectHelper},
  * {@link FileHelper}, {@link NetworkMonitor}, {@link ConsoleLogMonitor}, {@link PageSourceInspector},
@@ -38,6 +38,7 @@ public class Tools {
     private Navigator navigator;
     private ElementInteractor elementInteractor;
     private ElementInspector elementInspector;
+    private ClickabilityChecker clickabilityChecker;
     private WaitHelper waitHelper;
     private AlertHandler alertHandler;
     private FrameHandler frameHandler;
@@ -156,6 +157,7 @@ public class Tools {
         navigator = null;
         elementInteractor = null;
         elementInspector = null;
+        clickabilityChecker = null;
         waitHelper = null;
         alertHandler = null;
         frameHandler = null;
@@ -246,6 +248,14 @@ public class Tools {
         requireElementInteractor().click(locatorType, locatorValue);
     }
 
+    /**
+     * Clicks, retrying for up to {@code waitWhileCovered} while another element (e.g. a loading overlay)
+     * intercepts the click.
+     */
+    public void click(By locator, Duration waitWhileCovered) {
+        requireElementInteractor().click(locator, waitWhileCovered);
+    }
+
     public void sendKeys(By locator, String text) {
         requireElementInteractor().sendKeys(locator, text);
     }
@@ -302,6 +312,14 @@ public class Tools {
 
     public boolean isDisplayed(String locatorType, String locatorValue) {
         return requireElementInspector().isDisplayed(locatorType, locatorValue);
+    }
+
+    /**
+     * Whether the element is displayed, enabled and not covered by another element - scrolling it into
+     * view first if needed, as a click would.
+     */
+    public ClickabilityChecker.Clickability checkClickable(By locator) {
+        return requireClickabilityChecker().check(locator);
     }
 
     public boolean isEnabled(By locator) {
@@ -868,7 +886,8 @@ public class Tools {
         this.navigator = new Navigator(driver);
         this.elementInteractor = new ElementInteractor(driver, locators);
         this.elementInspector = new ElementInspector(driver, locators);
-        this.waitHelper = new WaitHelper(driver, locators);
+        this.clickabilityChecker = new ClickabilityChecker(driver);
+        this.waitHelper = new WaitHelper(driver, locators, clickabilityChecker);
         this.alertHandler = new AlertHandler(driver);
         this.frameHandler = new FrameHandler(driver, locators);
         this.windowManager = new WindowManager(driver);
@@ -897,6 +916,11 @@ public class Tools {
     private ElementInspector requireElementInspector() {
         session.requireDriver();
         return elementInspector;
+    }
+
+    private ClickabilityChecker requireClickabilityChecker() {
+        session.requireDriver();
+        return clickabilityChecker;
     }
 
     private WaitHelper requireWaitHelper() {

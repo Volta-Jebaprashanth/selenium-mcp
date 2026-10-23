@@ -40,6 +40,25 @@ class LocatorsTest {
     }
 
     @Test
+    void textStrategiesDescribeThemselvesByTheirText() {
+        assertEquals("By.text: Create Put", locators.toBy("text", "Create Put").toString());
+        assertEquals("By.partialText: Create", locators.toBy("partialText", "Create").toString());
+    }
+
+    @Test
+    void blankTextIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> locators.toBy("text", "  "));
+    }
+
+    @Test
+    void xpathLiteralsQuoteWhicheverWayTheValueAllows() {
+        assertEquals("'Save'", Locators.xpathLiteral("Save"));
+        assertEquals("\"Don't save\"", Locators.xpathLiteral("Don't save"));
+        assertEquals("'Say \"hi\"'", Locators.xpathLiteral("Say \"hi\""));
+        assertEquals("concat('It', \"'\", 's \"x\"')", Locators.xpathLiteral("It's \"x\""));
+    }
+
+    @Test
     void indexOrVisibleOnlyNarrowTheLocatorAndNeitherLeavesItPlain() {
         assertEquals(By.id("q"), locators.toBy("id", "q", null, false));
         assertInstanceOf(FilteredBy.class, locators.toBy("id", "q", 1, false));

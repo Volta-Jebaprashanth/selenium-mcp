@@ -14,10 +14,14 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
 public class PageSourceTools {
 
     private static final String LOCATOR_TYPE_DESC =
-            "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName.";
+            "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains).";
     private static final String NOTABLE_ATTRS_DESC =
             "id, class, name, type, href, src, value, placeholder, role, alt, title, for, target, "
                     + "data-testid, aria-label, aria-hidden, disabled, checked, selected, readonly";
+    private static final String STATE_DESC = "visible, enabled and clickable (true/false; clickable means displayed, "
+            + "enabled and not covered by another element, which is then named in coveredBy, e.g. a loading overlay). "
+            + "An element outside the viewport gets offscreen:true and no clickable flag, since what covers it isn't "
+            + "known until it is scrolled to - use isClickable for that.";
     private static final int DEFAULT_MAX_DEPTH = 20;
     private static final int DEFAULT_LIMIT = 50;
 
@@ -60,7 +64,9 @@ public class PageSourceTools {
     @McpTool(description = "Get the ENTIRE page as a compact JSON element tree rooted at <body>, without scripts, "
             + "styles, or comments - far cheaper to read than the full HTML source. Each node has tag, any notable "
             + "attributes present (" + NOTABLE_ATTRS_DESC + "), text (its own direct text, trimmed and truncated to "
-            + "120 characters), and children. There is no locator filtering here - it always returns the whole page. "
+            + "120 characters), and children. Interactive nodes (buttons, links, inputs, selects, ARIA buttons, "
+            + "anything with onclick/tabindex) also get " + STATE_DESC + " "
+            + "There is no locator filtering here - it always returns the whole page. "
             + "If you already know roughly what you're looking for (e.g. all inputs, or one specific element among "
             + "several), use getPageElementsFiltered instead - it targets matches directly and is much cheaper.")
     public String getPageElements(
@@ -82,7 +88,8 @@ public class PageSourceTools {
             + "JSON, optionally with surrounding context - the tool to reach for when you want a specific kind of "
             + "element (e.g. every <input>, every element with class 'card') rather than the whole page tree. "
             + "\n\nExample: locatorType=xpath, locatorValue=//input returns one entry per <input> on the page, each "
-            + "with tag/id/class/name/type/etc. and its own direct text. "
+            + "with tag/id/class/name/type/etc. and its own direct text. Every match (and any interactive "
+            + "descendant) also gets " + STATE_DESC + " "
             + "\n\nBy default only the matched elements themselves are returned. Turn on the extra context you need: "
             + "\n- includeAncestors=true adds each match's parent chain, immediate parent first up through <html> "
             + "last. Every node in the chain (and the match itself) gets siblingIndex/siblingCount, e.g. "

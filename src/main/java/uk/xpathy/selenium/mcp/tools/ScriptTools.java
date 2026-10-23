@@ -98,7 +98,7 @@ public class ScriptTools {
 
     @McpTool(description = "Scroll the page so that an element is in view, located by a strategy and value.")
     public String scrollIntoView(
-            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true)
+            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains)", required = true)
             String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true)
             String locatorValue,

@@ -1,5 +1,6 @@
 package uk.xpathy.selenium.mcp.tools;
 
+import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.WebDriverException;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Component;
 import uk.xpathy.selenium.mcp.webdriver.BrowserOptions;
 import uk.xpathy.selenium.mcp.webdriver.Tools;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ import java.util.Map;
 public class BrowserTools {
 
     private static final int DEFAULT_DEBUG_PORT = 9222;
+    private static final int DEFAULT_WAIT_IF_COVERED_SECONDS = 5;
     private static final String NO_BROWSER = "No browser is open. Call openBrowser first.";
     private static final String SESSION_DESC = "Name for this browser session (1-32 letters, digits, '-' or '_'). "
             + "Only needed to run several browsers at once: the first browser is named 'default', and opening "
@@ -339,22 +342,31 @@ public class BrowserTools {
         }
     }
 
-    @McpTool(description = "Click an element on the current page, located by a strategy and value.")
+    @McpTool(description = "Click an element on the current page, located by a strategy and value. If another element "
+            + "covers it (e.g. a loading overlay), the click is retried until it clears, up to waitIfCoveredSeconds.")
     public String click(
-            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true)
+            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains)", required = true)
             String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true)
             String locatorValue,
             @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
-            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly,
+            @McpToolParam(description = "Max seconds to keep retrying while another element (e.g. a loading overlay or "
+                    + "spinner) intercepts the click. 0 tries once. Defaults to " + DEFAULT_WAIT_IF_COVERED_SECONDS + ".",
+                    required = false) Integer waitIfCoveredSeconds) {
         synchronized (sessions) {
             Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) {
                 return NO_BROWSER;
             }
+            int wait = waitIfCoveredSeconds == null ? DEFAULT_WAIT_IF_COVERED_SECONDS : Math.max(0, waitIfCoveredSeconds);
             try {
-                tools.click(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
+                tools.click(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), Duration.ofSeconds(wait));
                 return sessions.label() + "Clicked element located by " + locatorType + "=" + locatorValue;
+            } catch (ElementClickInterceptedException e) {
+                return sessions.label() + "Failed to click element: another element still covered it after " + wait
+                        + "s. Wait for that element to go away (e.g. waitForInvisible on it) or raise waitIfCoveredSeconds. "
+                        + ErrorMessages.of(e);
             } catch (Exception e) {
                 return sessions.label() + "Failed to click element: " + ErrorMessages.of(e);
             }
@@ -363,7 +375,7 @@ public class BrowserTools {
 
     @McpTool(description = "Send keys (type text) into an element on the current page, located by a strategy and value.")
     public String sendKeys(
-            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true)
+            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains)", required = true)
             String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true)
             String locatorValue,

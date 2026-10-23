@@ -31,7 +31,7 @@ Every test automation engineer who's tried pairing an AI coding assistant with a
 
 ## What it does
 
-Beyond element discovery, it's a full Selenium automation surface for writing and maintaining a real test suite: open a browser, navigate, read the page source, click elements, type into fields — all via standard Selenium locators (`id`, `name`, `css`, `xpath`, `className`, `linkText`, `partialLinkText`, `tagName`).
+Beyond element discovery, it's a full Selenium automation surface for writing and maintaining a real test suite: open a browser, navigate, read the page source, click elements, type into fields — all via standard Selenium locators (`id`, `name`, `css`, `xpath`, `className`, `linkText`, `partialLinkText`, `tagName`), or simply by the text on screen (`text`, `partialText`).
 
 It also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — passive network capture, request mocking/blocking, simulated network conditions, and browser console log capture, useful for diagnosing flaky waits — plus a standalone REST client for API automation, so a test automation engineer can get AI help combining REST Assured-style API checks with Selenium UI flows in one test, in one workflow. See [Network capture, mocking & console logs](#network-capture-mocking--console-logs-networktools--chromeedge-only) and [REST API automation](#rest-api-automation-apitools) below.
 
@@ -157,9 +157,13 @@ While more than one session is open, navigation, `click`, `sendKeys`, `getTitle`
 
 For the full searchable tool surface (118 tools across 16 categories) with parameters and examples, see the [MCP Tools Reference](https://selenium-mcp.xpathy.uk/docs/tools) on the docs site. Summary by category below.
 
-Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpath`, `className`/`class`, `linkText`, `partialLinkText`, `tagName`/`tag`.
+Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpath`, `className`/`class`, `linkText`, `partialLinkText`, `tagName`/`tag`, `text`, `partialText`.
 
-`click`, `sendKeys`, `getText`, `getAttribute`, `hover`, `doubleClick`, `rightClick`, `scrollIntoView`, and `takeElementScreenshot` also take optional `index` (zero-based, which match to use when the locator matches several elements) and `visibleOnly` (ignore hidden matches, applied before `index`).
+`text` matches an element by its visible text (whitespace-normalized), e.g. `locatorType=text, locatorValue=Create Put` instead of `//button[normalize-space()='Create Put']`; `partialText` matches text that contains the value. The innermost element holding the text matches, promoted to its button/link-like ancestor if it has one, so `<button><span>Create Put</span></button>` resolves to the button. Submit/button `<input>`s match on their `value`.
+
+Every tool that acts on one element also takes optional `index` (zero-based, which match to use when the locator matches several elements) and `visibleOnly` (ignore hidden matches, applied before `index`). Tools that act on every match (`elementExists`, `countElements`, `getElementsText`, `waitForElementCount`) take `visibleOnly` only.
+
+`click` retries for up to `waitIfCoveredSeconds` (default 5) while another element, such as a loading overlay, intercepts the click.
 
 Errors come back as the driver's one-line message (e.g. `Script error: javascript error: Cannot read properties of undefined (reading 'click')`), without Selenium's build/system/capabilities/session diagnostics.
 
@@ -203,6 +207,7 @@ Example: `locatorType=xpath`, `locatorValue=//input`, `includeAncestors=true` re
 | `getCssValue` | Computed CSS property value. |
 | `getTagName` | HTML tag name. |
 | `isDisplayed` / `isEnabled` / `isSelected` | Element state checks. |
+| `isClickable` | Whether a click would reach the element: displayed, enabled and not covered by another element. Returns `true`, or `false: <reason>`, e.g. `false: covered by div.spinner-backdrop`. |
 | `getElementSize` / `getElementLocation` | Rendered dimensions / position. |
 | `elementExists` | Whether a locator matches anything, without throwing. |
 | `countElements` | Count of elements matching a locator. |
@@ -264,8 +269,8 @@ For waiting on in-flight network requests to settle (e.g. after a click that tri
 
 | Tool | Description |
 |---|---|
-| `takeScreenshot` | Viewport screenshot by default; `fullPage=true` captures the whole scrollable page (Chrome/Edge via CDP, Firefox natively). Returns base64 PNG, or saves to a file path if given. Content scrolling inside its own container is only captured as far as it's visible. |
-| `takeElementScreenshot` | Screenshot of a single element. |
+| `takeScreenshot` | Viewport screenshot by default; `fullPage=true` captures the whole scrollable page (Chrome/Edge via CDP, Firefox natively). Returns the PNG as MCP image content the client can show the model directly, or saves to a file path if given. Content scrolling inside its own container is only captured as far as it's visible. |
+| `takeElementScreenshot` | Screenshot of a single element, returned as an image or saved to a file path. |
 
 ### JavaScript & scrolling (`ScriptTools`)
 

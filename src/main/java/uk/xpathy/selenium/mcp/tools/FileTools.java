@@ -21,17 +21,19 @@ public class FileTools {
 
     @McpTool(description = "Upload a local file by sending its absolute path to an <input type=\"file\"> element. The file must exist on the machine running the browser.")
     public String uploadFile(
-            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true)
+            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains)", required = true)
             String locatorType,
             @McpToolParam(description = "The locator value to find the file input element", required = true)
             String locatorValue,
             @McpToolParam(description = "Absolute path of the local file to upload", required = true)
-            String absoluteFilePath) {
+            String absoluteFilePath,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
         synchronized (sessions) {
             Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
-                tools.uploadFile(locatorType, locatorValue, absoluteFilePath);
+                tools.uploadFile(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), absoluteFilePath);
                 return "Uploaded file " + absoluteFilePath;
             } catch (Exception e) {
                 return sessions.label() + "Failed to upload file: " + ErrorMessages.of(e);

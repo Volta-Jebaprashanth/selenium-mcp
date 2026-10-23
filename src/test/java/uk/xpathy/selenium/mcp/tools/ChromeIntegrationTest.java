@@ -3,11 +3,15 @@ package uk.xpathy.selenium.mcp.tools;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
+import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.ImageContent;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
 import org.openqa.selenium.ScriptTimeoutException;
 import uk.xpathy.selenium.mcp.webdriver.BrowserOptions;
 import uk.xpathy.selenium.mcp.webdriver.ConsoleLogMonitor;
@@ -26,6 +30,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -46,6 +52,22 @@ class ChromeIntegrationTest {
             </body></html>
             """;
 
+    private static final String CONTROLS_PAGE = """
+            <!doctype html><html><head><title>Create Put</title></head><body>
+              <button id="save" disabled><span>Create Put</span></button>
+              <button id="go"><span class="icon"></span> Go   now </button>
+              <input id="nosave" type="submit" value="Don't save">
+              <div id="plain">Just text</div>
+            </body></html>
+            """;
+
+    private static final String OVERLAY_PAGE = """
+            <!doctype html><html><head><title>overlay</title></head><body>
+              <button id="under" onclick="window.clicked='under'">Under</button>
+              <div id="overlay" class="loading backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.3)"></div>
+            </body></html>
+            """;
+
     private static HttpServer server;
     private static BrowserSessions sessions;
     private static Tools tools;
@@ -55,8 +77,14 @@ class ChromeIntegrationTest {
     static void start() throws Exception {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", exchange -> {
-            boolean api = exchange.getRequestURI().getPath().startsWith("/api");
-            byte[] body = (api ? "{\"ok\":true}" : PAGE).getBytes(StandardCharsets.UTF_8);
+            String path = exchange.getRequestURI().getPath();
+            boolean api = path.startsWith("/api");
+            String page = switch (path) {
+                case "/controls" -> CONTROLS_PAGE;
+                case "/overlay" -> OVERLAY_PAGE;
+                default -> PAGE;
+            };
+            byte[] body = (api ? "{\"ok\":true}" : page).getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", api ? "application/json" : "text/html");
             exchange.sendResponseHeaders(200, body.length);
             try (OutputStream out = exchange.getResponseBody()) {
@@ -186,6 +214,53 @@ class ChromeIntegrationTest {
         assertEquals(3, filtered.get("totalMatches").asInt());
         assertEquals(2, filtered.get("returnedMatches").asInt());
         assertTrue(filtered.get("truncated").asBoolean());
+    }
+
+    @Test
+    void textLocatorsFindElementsByWhatTheySay() {
+        tools.navigateTo(baseUrl + "/controls");
+
+        assertEquals("save", tools.getAttribute(tools.locator("text", "Create Put", null, false), "id"));
+        assertEquals("false", new ElementQueryTools(sessions).isEnabled("text", "Create Put", null, null));
+        assertEquals("go", tools.getAttribute(tools.locator("text", "Go now", null, false), "id"));
+        assertEquals("go", tools.getAttribute(tools.locator("partialText", "Go", null, false), "id"));
+        assertEquals("nosave", tools.getAttribute(tools.locator("text", "Don't save", null, false), "id"));
+        assertEquals("plain", tools.getAttribute(tools.locator("text", "Just text", null, false), "id"));
+        assertEquals(1, tools.countElements(tools.locator("text", "Create Put", null, false)));
+
+        String missing = new ElementQueryTools(sessions).getText("text", "Nope", null, null);
+        assertTrue(missing.contains("By.text: Nope"), missing);
+    }
+
+    @Test
+    void anOverlayMakesAButtonUnclickableUntilItGoes() throws Exception {
+        tools.navigateTo(baseUrl + "/overlay");
+        By under = tools.locator("id", "under", null, false);
+
+        assertEquals("false: covered by div#overlay.loading.backdrop", tools.checkClickable(under).describe());
+        String waited = new WaitTools(sessions).waitForClickable("id", "under", 1, null, null);
+        assertTrue(waited.contains("covered by div#overlay"), waited);
+        JsonNode match = new ObjectMapper().readTree(tools.getPageElementsFiltered(under, false, false, false, 20, 5))
+                .get("matches").get(0);
+        assertTrue(match.get("visible").asBoolean());
+        assertTrue(match.get("enabled").asBoolean());
+        assertFalse(match.get("clickable").asBoolean());
+        assertEquals("div#overlay.loading.backdrop", match.get("coveredBy").asText());
+        assertThrows(ElementClickInterceptedException.class, () -> tools.click(under, Duration.ZERO));
+
+        tools.executeScript("setTimeout(() => document.getElementById('overlay').remove(), 700)");
+        assertEquals("Clicked element located by id=under",
+                new BrowserTools(sessions).click("id", "under", null, null, 5));
+        assertEquals("under", tools.executeScript("return window.clicked"));
+        assertEquals("true", tools.checkClickable(under).describe());
+    }
+
+    @Test
+    void screenshotsComeBackAsImages() {
+        CallToolResult result = new ScreenshotTools(sessions).takeScreenshot(null, false);
+
+        assertNotEquals(Boolean.TRUE, result.isError());
+        assertEquals("image/png", assertInstanceOf(ImageContent.class, result.content().getFirst()).mimeType());
     }
 
     @Test
