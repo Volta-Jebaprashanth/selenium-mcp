@@ -13,27 +13,30 @@ import uk.xpathy.selenium.mcp.webdriver.Tools;
 @ToolGroup("files")
 public class FileTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public FileTools(Tools tools) {
-        this.tools = tools;
+    public FileTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Upload a local file by sending its absolute path to an <input type=\"file\"> element. The file must exist on the machine running the browser.")
     public String uploadFile(
-            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true)
+            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains)", required = true)
             String locatorType,
             @McpToolParam(description = "The locator value to find the file input element", required = true)
             String locatorValue,
             @McpToolParam(description = "Absolute path of the local file to upload", required = true)
-            String absoluteFilePath) {
-        synchronized (tools) {
+            String absoluteFilePath,
+            @McpToolParam(description = ElementMatch.INDEX_DESC, required = false) Integer index,
+            @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false) Boolean visibleOnly) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
-                tools.uploadFile(locatorType, locatorValue, absoluteFilePath);
+                tools.uploadFile(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), absoluteFilePath);
                 return "Uploaded file " + absoluteFilePath;
             } catch (Exception e) {
-                return "Failed to upload file: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to upload file: " + ErrorMessages.of(e);
             }
         }
     }
@@ -42,7 +45,8 @@ public class FileTools {
     public String printToPdf(
             @McpToolParam(description = "Absolute file path to save the PDF to. If omitted, the PDF is returned as base64.", required = false)
             String filePath) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 if (filePath == null || filePath.isBlank()) {
@@ -51,7 +55,7 @@ public class FileTools {
                 tools.printToPdfFile(filePath);
                 return "PDF saved to " + filePath;
             } catch (Exception e) {
-                return "Failed to print to PDF: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to print to PDF: " + ErrorMessages.of(e);
             }
         }
     }

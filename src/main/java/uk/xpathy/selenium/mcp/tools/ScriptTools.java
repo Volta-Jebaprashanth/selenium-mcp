@@ -20,11 +20,11 @@ import java.util.Map;
 @ToolGroup("script")
 public class ScriptTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ScriptTools(Tools tools) {
-        this.tools = tools;
+    public ScriptTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Execute JavaScript in the current page as the body of a function and return its result. "
@@ -37,14 +37,15 @@ public class ScriptTools {
             @McpToolParam(description = "Script timeout in milliseconds, for long-running or awaited scripts. "
                     + "Defaults to the session's setting (30000 unless changed).", required = false)
             Integer timeoutMs) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             if (timeoutMs != null && timeoutMs <= 0) return "timeoutMs must be greater than 0.";
             try {
                 Object result = tools.executeScript(script, timeoutMs == null ? null : Duration.ofMillis(timeoutMs));
                 return format(result);
             } catch (Exception e) {
-                return "Script error: " + ErrorMessages.of(e);
+                return sessions.label() + "Script error: " + ErrorMessages.of(e);
             }
         }
     }
@@ -57,15 +58,16 @@ public class ScriptTools {
             String script,
             @McpToolParam(description = "Also run it on the current page immediately. Defaults to true.", required = false)
             Boolean runNow) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 String id = tools.addInitScript(script, !Boolean.FALSE.equals(runNow));
                 return "Init script registered with id " + id + ".";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to register init script: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to register init script: " + ErrorMessages.of(e);
             }
         }
     }
@@ -75,7 +77,8 @@ public class ScriptTools {
     public String removeInitScript(
             @McpToolParam(description = "Id returned by addInitScript. Omit to remove all.", required = false)
             String id) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 if (id == null || id.isBlank()) {
@@ -86,16 +89,16 @@ public class ScriptTools {
                 tools.removeInitScript(id.strip());
                 return "Removed init script " + id.strip() + ".";
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to remove init script: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to remove init script: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Scroll the page so that an element is in view, located by a strategy and value.")
     public String scrollIntoView(
-            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, or tagName", required = true)
+            @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains)", required = true)
             String locatorType,
             @McpToolParam(description = "The locator value to find the element", required = true)
             String locatorValue,
@@ -103,13 +106,14 @@ public class ScriptTools {
             Integer index,
             @McpToolParam(description = ElementMatch.VISIBLE_ONLY_DESC, required = false)
             Boolean visibleOnly) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.scrollIntoView(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
                 return "Scrolled element into view.";
             } catch (Exception e) {
-                return "Failed to scroll into view: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to scroll into view: " + ErrorMessages.of(e);
             }
         }
     }
@@ -118,39 +122,42 @@ public class ScriptTools {
     public String scrollBy(
             @McpToolParam(description = "Horizontal pixels to scroll", required = true) Integer x,
             @McpToolParam(description = "Vertical pixels to scroll", required = true) Integer y) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.scrollBy(x, y);
                 return "Scrolled by (" + x + ", " + y + ")";
             } catch (Exception e) {
-                return "Failed to scroll: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to scroll: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Scroll to the top of the page.")
     public String scrollToTop() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.scrollToTop();
                 return "Scrolled to top.";
             } catch (Exception e) {
-                return "Failed to scroll to top: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to scroll to top: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Scroll to the bottom of the page.")
     public String scrollToBottom() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.scrollToBottom();
                 return "Scrolled to bottom.";
             } catch (Exception e) {
-                return "Failed to scroll to bottom: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to scroll to bottom: " + ErrorMessages.of(e);
             }
         }
     }

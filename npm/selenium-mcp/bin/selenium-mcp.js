@@ -98,10 +98,32 @@ if (!args.some((arg) => arg.startsWith('--logging.file.name'))) {
   }
 }
 
-const child = spawn(java, ['-jar', jar, ...args], { stdio: 'inherit' });
+// The server closes its browsers when it shuts down cleanly: on a signal (SIGTERM etc. run the
+// JVM's shutdown hooks) or at the end of stdin. On Windows neither survives a plain spawn: Node
+// puts the child in a job object that is killed outright along with this launcher, and child.kill()
+// is a hard TerminateProcess, so an MCP client killing the launcher would leave chromedriver and
+// browser processes behind. There the server runs detached, outside the job, and reads stdin through
+// this launcher, so it sees end-of-input - and shuts down cleanly - when the launcher goes away.
+const child = isWindows
+  ? spawn(java, ['-jar', jar, ...args], { stdio: ['pipe', 'inherit', 'inherit'], detached: true, windowsHide: true })
+  : spawn(java, ['-jar', jar, ...args], { stdio: 'inherit' });
+
+if (isWindows) {
+  process.stdin.pipe(child.stdin);
+  child.stdin.on('error', () => {
+    // The server already exited; its exit handler below ends this process.
+  });
+}
 
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) {
-  process.on(signal, () => child.kill(signal));
+  process.on(signal, () => {
+    if (!isWindows) {
+      child.kill(signal);
+      return;
+    }
+    child.stdin.end();
+    setTimeout(() => child.kill(), 10000).unref();
+  });
 }
 
 child.on('error', (err) => {

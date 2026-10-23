@@ -29,11 +29,11 @@ public class NetworkTools {
     private static final long DEFAULT_IDLE_MILLIS = 500;
     private static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public NetworkTools(Tools tools) {
-        this.tools = tools;
+    public NetworkTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Start capturing network traffic (method, URL, headers, bodies, status, timing) for the "
@@ -41,28 +41,30 @@ public class NetworkTools {
     public String startNetworkCapture(
             @McpToolParam(description = "Only capture requests whose URL matches this regex. Omit to capture everything.", required = false)
             String urlPattern) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.startNetworkCapture(urlPattern);
                 return "Network capture started" + (urlPattern != null && !urlPattern.isBlank() ? " for URLs matching: " + urlPattern : ".");
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to start network capture: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to start network capture: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Stop capturing new network traffic. Already-captured entries remain available via getNetworkLog.")
     public String stopNetworkCapture() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.stopNetworkCapture();
                 return "Network capture stopped.";
             } catch (Exception e) {
-                return "Failed to stop network capture: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to stop network capture: " + ErrorMessages.of(e);
             }
         }
     }
@@ -77,29 +79,31 @@ public class NetworkTools {
             String method,
             @McpToolParam(description = "Max number of entries to return, most recent. Defaults to 100.", required = false)
             Integer limit) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 List<NetworkMonitor.NetworkEntry> entries =
                         tools.getNetworkLog(urlPattern, method, limit == null ? DEFAULT_LOG_LIMIT : limit);
                 return toJson(entries.stream().map(this::toMap).toList());
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to read network log: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to read network log: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Clear the captured network log without stopping capture.")
     public String clearNetworkLog() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearNetworkLog();
                 return "Network log cleared.";
             } catch (Exception e) {
-                return "Failed to clear network log: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to clear network log: " + ErrorMessages.of(e);
             }
         }
     }
@@ -112,16 +116,17 @@ public class NetworkTools {
             Long idleMillis,
             @McpToolParam(description = "Max seconds to wait overall. Defaults to 30.", required = false)
             Integer timeoutSeconds) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.waitForNetworkIdle(idleMillis == null ? DEFAULT_IDLE_MILLIS : idleMillis,
                         timeoutSeconds == null ? DEFAULT_TIMEOUT_SECONDS : timeoutSeconds);
                 return "Network is idle.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Timed out waiting for network idle: " + ErrorMessages.of(e);
+                return sessions.label() + "Timed out waiting for network idle: " + ErrorMessages.of(e);
             }
         }
     }
@@ -129,15 +134,16 @@ public class NetworkTools {
     @McpTool(description = "Get the number of HTTP requests currently in flight. Requires Chrome or Edge; "
             + "arms passive network tracking as a side effect if it wasn't already active.")
     public String getPendingRequestCount() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.armNetworkTracking();
                 return String.valueOf(tools.getPendingRequestCount());
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to read pending request count: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to read pending request count: " + ErrorMessages.of(e);
             }
         }
     }
@@ -158,28 +164,30 @@ public class NetworkTools {
             String body,
             @McpToolParam(description = "Extra response headers as a JSON object, e.g. {\"X-Test\": \"1\"}. Omit for none.", required = false)
             String headersJson) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.mockResponse(urlPattern, method, status, contentType, body, parseHeaders(headersJson));
                 return "Mock registered for requests matching: " + urlPattern;
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to register mock: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to register mock: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Remove all registered response mocks.")
     public String clearMockResponses() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearMockResponses();
                 return "All mocks cleared.";
             } catch (Exception e) {
-                return "Failed to clear mocks: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to clear mocks: " + ErrorMessages.of(e);
             }
         }
     }
@@ -190,28 +198,30 @@ public class NetworkTools {
     public String blockRequests(
             @McpToolParam(description = "Regex matched against the full request URL.", required = true)
             String urlPattern) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.blockRequests(urlPattern);
                 return "Blocking requests matching: " + urlPattern;
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to block requests: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to block requests: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Remove all URL blocking rules.")
     public String clearBlockedRequests() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearBlockedRequests();
                 return "All blocking rules cleared.";
             } catch (Exception e) {
-                return "Failed to clear blocking rules: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to clear blocking rules: " + ErrorMessages.of(e);
             }
         }
     }
@@ -227,7 +237,8 @@ public class NetworkTools {
             Integer downloadThroughputKbps,
             @McpToolParam(description = "Simulated upload throughput in kb/s. Use -1 for no limit. Defaults to -1.", required = false)
             Integer uploadThroughputKbps) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.setNetworkConditions(Boolean.TRUE.equals(offline), latencyMillis == null ? 0 : latencyMillis,
@@ -235,38 +246,40 @@ public class NetworkTools {
                         uploadThroughputKbps == null ? -1 : uploadThroughputKbps);
                 return "Network conditions applied.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to set network conditions: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to set network conditions: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Get the currently simulated network conditions.")
     public String getNetworkConditions() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getNetworkConditions();
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to read network conditions: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to read network conditions: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Reset simulated network conditions back to normal (no throttling, online).")
     public String clearNetworkConditions() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearNetworkConditions();
                 return "Network conditions reset to normal.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to reset network conditions: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to reset network conditions: " + ErrorMessages.of(e);
             }
         }
     }
@@ -278,15 +291,16 @@ public class NetworkTools {
             String username,
             @McpToolParam(description = "Password to supply for HTTP Basic auth challenges.", required = true)
             String password) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.setBasicAuthCredentials(username, password);
                 return "Basic auth credentials registered.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to register basic auth credentials: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to register basic auth credentials: " + ErrorMessages.of(e);
             }
         }
     }
@@ -294,15 +308,16 @@ public class NetworkTools {
     @McpTool(description = "Start capturing browser console output (console.log/warn/error and similar). Requires "
             + "Chrome or Edge. Call getConsoleLogs to read captured entries.")
     public String startConsoleCapture() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.startConsoleCapture();
                 return "Console log capture started.";
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to start console log capture: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to start console log capture: " + ErrorMessages.of(e);
             }
         }
     }
@@ -314,29 +329,31 @@ public class NetworkTools {
             String type,
             @McpToolParam(description = "Max number of entries to return, most recent. Defaults to 100.", required = false)
             Integer limit) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 List<ConsoleLogMonitor.ConsoleLogEntry> entries =
                         tools.getConsoleLogs(type, limit == null ? DEFAULT_LOG_LIMIT : limit);
                 return toJson(entries.stream().map(this::toMap).toList());
             } catch (UnsupportedOperationException e) {
-                return ErrorMessages.of(e);
+                return sessions.label() + ErrorMessages.of(e);
             } catch (Exception e) {
-                return "Failed to read console logs: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to read console logs: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Clear captured console log entries without stopping capture.")
     public String clearConsoleLogs() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clearConsoleLogs();
                 return "Console log cleared.";
             } catch (Exception e) {
-                return "Failed to clear console log: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to clear console log: " + ErrorMessages.of(e);
             }
         }
     }

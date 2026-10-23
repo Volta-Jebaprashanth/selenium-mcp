@@ -72,7 +72,14 @@ public class PageSourceInspector {
             return JSON.stringify(result);
             """;
 
-    private static final String ELEMENTS_JS = """
+    private static final String ADD_STATE_FN = ClickabilityChecker.STATE_FN + """
+            function addState(node, el) {
+                var state = interactState(el, false);
+                for (var k in state) node[k] = state[k];
+            }
+            """;
+
+    private static final String ELEMENTS_JS = ADD_STATE_FN + """
             var maxDepth = arguments[0] || 20;
             var SKIP_TAGS = {SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEMPLATE: 1};
             var NOTABLE_ATTRS = ['id', 'class', 'name', 'type', 'href', 'src', 'value', 'placeholder',
@@ -104,6 +111,7 @@ public class PageSourceInspector {
                 }
                 var text = directText(el);
                 if (text) node.text = text;
+                if (isInteractive(el)) addState(node, el);
                 var childEls = el.children;
                 if (depth >= maxDepth) {
                     if (childEls.length) node.childrenTruncated = childEls.length;
@@ -121,7 +129,7 @@ public class PageSourceInspector {
             return JSON.stringify(serialize(document.body, 0));
             """;
 
-    private static final String FILTERED_ELEMENTS_JS = """
+    private static final String FILTERED_ELEMENTS_JS = ADD_STATE_FN + """
             var matches = arguments[0];
             var includeAncestors = arguments[1];
             var includeDescendants = arguments[2];
@@ -179,6 +187,7 @@ public class PageSourceInspector {
                 var node = describe(el);
                 delete node.siblingIndex;
                 delete node.siblingCount;
+                if (isInteractive(el)) addState(node, el);
                 var childEls = el.children;
                 if (depth >= maxDepth) {
                     if (childEls.length) node.childrenTruncated = childEls.length;
@@ -221,6 +230,7 @@ public class PageSourceInspector {
             for (var i = 0; i < matches.length; i++) {
                 var el = matches[i];
                 var entry = describe(el);
+                addState(entry, el);
                 if (includeAncestors) entry.ancestors = buildAncestors(el);
                 if (includeSiblings) entry.siblings = buildSiblings(el);
                 if (includeDescendants) {

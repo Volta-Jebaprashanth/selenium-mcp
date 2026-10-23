@@ -2,7 +2,10 @@ package uk.xpathy.selenium.mcp.webdriver;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -16,10 +19,12 @@ public class WaitHelper {
 
     private final WebDriver driver;
     private final Locators locators;
+    private final ClickabilityChecker clickabilityChecker;
 
-    public WaitHelper(WebDriver driver, Locators locators) {
+    public WaitHelper(WebDriver driver, Locators locators, ClickabilityChecker clickabilityChecker) {
         this.driver = driver;
         this.locators = locators;
+        this.clickabilityChecker = clickabilityChecker;
     }
 
     public void waitForVisible(By locator, int timeoutSeconds) {
@@ -30,8 +35,32 @@ public class WaitHelper {
         waitForVisible(locators.toBy(locatorType, locatorValue), timeoutSeconds);
     }
 
+    /**
+     * Waits until the element is displayed, enabled and not covered by another element (see
+     * {@link ClickabilityChecker}) - stricter than Selenium's {@code elementToBeClickable}, which a
+     * button under a loading overlay already passes.
+     */
     public void waitForClickable(By locator, int timeoutSeconds) {
-        wait(timeoutSeconds).until(ExpectedConditions.elementToBeClickable(locator));
+        wait(timeoutSeconds).ignoring(StaleElementReferenceException.class).until(new ExpectedCondition<WebElement>() {
+            private String lastCoveredBy;
+
+            @Override
+            public WebElement apply(WebDriver d) {
+                WebElement element = ExpectedConditions.elementToBeClickable(locator).apply(d);
+                if (element == null) {
+                    return null;
+                }
+                ClickabilityChecker.Clickability state = clickabilityChecker.check(element);
+                lastCoveredBy = state.coveredBy();
+                return state.clickable() ? element : null;
+            }
+
+            @Override
+            public String toString() {
+                return "element located by " + locator + " to be visible, enabled and not covered by another element"
+                        + (lastCoveredBy == null ? "" : " (last covered by " + lastCoveredBy + ")");
+            }
+        });
     }
 
     public void waitForClickable(String locatorType, String locatorValue, int timeoutSeconds) {

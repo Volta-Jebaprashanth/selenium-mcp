@@ -1,6 +1,7 @@
 package uk.xpathy.selenium.mcp.tools;
 
 import org.openqa.selenium.WebDriverException;
+import uk.xpathy.selenium.mcp.webdriver.BrowserSession;
 
 /**
  * Turns exceptions into the short, single-purpose text an MCP client should see.
@@ -19,6 +20,13 @@ final class ErrorMessages {
             "Command:", "Element:", "Stacktrace:"
     };
 
+    /**
+     * Appended when the browser itself has gone away (e.g. its window was closed by hand), since every tool
+     * will fail the same way until the client opens a new one; openBrowser and listSessions drop the dead session.
+     */
+    static final String BROWSER_GONE_HINT = " (the browser is no longer reachable - it was closed or crashed. "
+            + "Call openBrowser to start a new one, or listSessions to see what is still open.)";
+
     private ErrorMessages() {
     }
 
@@ -26,10 +34,15 @@ final class ErrorMessages {
         if (e == null) {
             return "unknown error";
         }
+        String text = describe(e);
+        return BrowserSession.isBrowserGone(e) ? text + BROWSER_GONE_HINT : text;
+    }
+
+    private static String describe(Throwable e) {
         String message = e instanceof WebDriverException wde ? wde.getRawMessage() : e.getMessage();
         if (message == null || message.isBlank()) {
             Throwable cause = e.getCause();
-            return cause != null && cause != e ? of(cause) : e.getClass().getSimpleName();
+            return cause != null && cause != e ? describe(cause) : e.getClass().getSimpleName();
         }
         return trim(message);
     }

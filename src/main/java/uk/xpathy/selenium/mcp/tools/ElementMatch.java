@@ -10,6 +10,8 @@ final class ElementMatch {
             "Zero-based index of the match to use when the locator matches several elements. Defaults to the first match.";
     static final String VISIBLE_ONLY_DESC =
             "Only consider elements that are currently displayed (applied before index). Defaults to false.";
+    static final String VISIBLE_ONLY_ALL_DESC =
+            "Only consider matching elements that are currently displayed. Defaults to false.";
 
     private ElementMatch() {
     }

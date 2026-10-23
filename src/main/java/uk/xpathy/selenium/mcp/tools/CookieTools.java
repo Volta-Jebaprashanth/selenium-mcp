@@ -16,10 +16,10 @@ import java.util.stream.Collectors;
 @ToolGroup("cookies")
 public class CookieTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public CookieTools(Tools tools) {
-        this.tools = tools;
+    public CookieTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Add a cookie on the current domain.")
@@ -28,7 +28,8 @@ public class CookieTools {
             @McpToolParam(description = "Cookie value", required = true) String value,
             @McpToolParam(description = "Cookie domain. Defaults to the current domain.", required = false) String domain,
             @McpToolParam(description = "Cookie path. Defaults to /.", required = false) String path) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 if (domain == null && path == null) {
@@ -38,7 +39,7 @@ public class CookieTools {
                 }
                 return "Cookie " + name + " added.";
             } catch (Exception e) {
-                return "Failed to add cookie: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to add cookie: " + ErrorMessages.of(e);
             }
         }
     }
@@ -46,27 +47,29 @@ public class CookieTools {
     @McpTool(description = "Get a single cookie by name from the current domain.")
     public String getCookie(
             @McpToolParam(description = "Cookie name", required = true) String name) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Cookie cookie = tools.getCookie(name);
                 return cookie == null ? "No cookie named " + name + " found." : cookie.toString();
             } catch (Exception e) {
-                return "Failed to get cookie: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get cookie: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Get all cookies visible to the current page.")
     public String getAllCookies() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Set<Cookie> cookies = tools.getAllCookies();
                 if (cookies.isEmpty()) return "No cookies set.";
                 return cookies.stream().map(cookie -> cookie.toString()).collect(Collectors.joining("\n"));
             } catch (Exception e) {
-                return "Failed to get cookies: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get cookies: " + ErrorMessages.of(e);
             }
         }
     }
@@ -74,26 +77,28 @@ public class CookieTools {
     @McpTool(description = "Delete a single cookie by name.")
     public String deleteCookie(
             @McpToolParam(description = "Cookie name", required = true) String name) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.deleteCookie(name);
                 return "Cookie " + name + " deleted.";
             } catch (Exception e) {
-                return "Failed to delete cookie: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to delete cookie: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Delete all cookies visible to the current page.")
     public String deleteAllCookies() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.deleteAllCookies();
                 return "All cookies deleted.";
             } catch (Exception e) {
-                return "Failed to delete cookies: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to delete cookies: " + ErrorMessages.of(e);
             }
         }
     }

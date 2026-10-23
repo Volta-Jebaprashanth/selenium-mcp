@@ -16,47 +16,50 @@ import java.util.stream.Collectors;
 @ToolGroup("window")
 public class WindowTools {
 
-    private final Tools tools;
+    private final BrowserSessions sessions;
 
-    public WindowTools(Tools tools) {
-        this.tools = tools;
+    public WindowTools(BrowserSessions sessions) {
+        this.sessions = sessions;
     }
 
     @McpTool(description = "Maximize the current browser window.")
     public String maximizeWindow() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.maximizeWindow();
                 return "Window maximized.";
             } catch (Exception e) {
-                return "Failed to maximize window: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to maximize window: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Minimize the current browser window.")
     public String minimizeWindow() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.minimizeWindow();
                 return "Window minimized.";
             } catch (Exception e) {
-                return "Failed to minimize window: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to minimize window: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Make the current browser window fullscreen.")
     public String fullscreenWindow() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.fullscreenWindow();
                 return "Window set to fullscreen.";
             } catch (Exception e) {
-                return "Failed to fullscreen window: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to fullscreen window: " + ErrorMessages.of(e);
             }
         }
     }
@@ -65,26 +68,28 @@ public class WindowTools {
     public String setWindowSize(
             @McpToolParam(description = "Window width in pixels", required = true) Integer width,
             @McpToolParam(description = "Window height in pixels", required = true) Integer height) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.setWindowSize(width, height);
                 return "Window resized to " + width + "x" + height;
             } catch (Exception e) {
-                return "Failed to resize window: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to resize window: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Get the current browser window's size.")
     public String getWindowSize() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Dimension size = tools.getWindowSize();
                 return size.getWidth() + "x" + size.getHeight();
             } catch (Exception e) {
-                return "Failed to get window size: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get window size: " + ErrorMessages.of(e);
             }
         }
     }
@@ -93,38 +98,41 @@ public class WindowTools {
     public String setWindowPosition(
             @McpToolParam(description = "X coordinate in pixels", required = true) Integer x,
             @McpToolParam(description = "Y coordinate in pixels", required = true) Integer y) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.setWindowPosition(x, y);
                 return "Window moved to (" + x + ", " + y + ")";
             } catch (Exception e) {
-                return "Failed to move window: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to move window: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Get the handle of the currently focused window/tab.")
     public String getWindowHandle() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 return tools.getWindowHandle();
             } catch (Exception e) {
-                return "Failed to get window handle: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get window handle: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Get the handles of all open windows/tabs.")
     public String getWindowHandles() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 Set<String> handles = tools.getWindowHandles();
                 return handles.stream().collect(Collectors.joining(", "));
             } catch (Exception e) {
-                return "Failed to get window handles: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to get window handles: " + ErrorMessages.of(e);
             }
         }
     }
@@ -132,39 +140,42 @@ public class WindowTools {
     @McpTool(description = "Switch the driver's focus to the window/tab with the given handle. Use getWindowHandles to list handles.")
     public String switchToWindow(
             @McpToolParam(description = "The window handle to switch to", required = true) String handle) {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.switchToWindow(handle);
                 return "Switched to window " + handle;
             } catch (Exception e) {
-                return "Failed to switch window: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to switch window: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Open a new browser tab and switch focus to it.")
     public String openNewTab() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 String handle = tools.openNewTab();
                 return "Opened new tab with handle " + handle;
             } catch (Exception e) {
-                return "Failed to open new tab: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to open new tab: " + ErrorMessages.of(e);
             }
         }
     }
 
     @McpTool(description = "Close the currently focused window/tab. Does not release the driver — use closeBrowser for that.")
     public String closeCurrentWindow() {
-        synchronized (tools) {
+        synchronized (sessions) {
+            Tools tools = sessions.active();
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.closeCurrentWindow();
                 return "Closed current window.";
             } catch (Exception e) {
-                return "Failed to close window: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to close window: " + ErrorMessages.of(e);
             }
         }
     }
