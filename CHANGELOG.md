@@ -10,7 +10,7 @@ once it reaches a 1.0.0 release.
 
 ### Added
 
-- Session wait strategy for generated tests: `setAutoWait` / `getAutoWait`, and `implicitWaitSeconds` / `networkIdleMillis` / `animationIdleMillis` on `openBrowser`, `connectToBrowser` and `launchDebugBrowser`. Sessions still default to plain Selenium. When set, every action waits afterwards for fetch/XHR requests and then animations to settle, using an in-page tracker. Each action reports what it set off and which wait the generated test needs there, and failures a missing wait causes get a hint.
+- Session wait strategy for generated tests: `setAutoWait` / `getAutoWait`, and `implicitWaitSeconds` / `networkIdleMillis` / `animationIdleMillis` on `openBrowser`, `connectToBrowser` and `launchDebugBrowser`. Sessions still default to plain Selenium, and the server recommends `networkIdleMillis=500` / `animationIdleMillis=300` to the agent. When set, every action waits afterwards for fetch/XHR requests and then animations to settle, using an in-page tracker. Each action reports what it set off and which wait the generated test needs there, and failures a missing wait causes get a hint.
 - `getWaitReport`: the steps whose generated code needs a wait. `closeBrowser` prints it before discarding it.
 - `getWaitCodeSnippets`: usage rules, setup lines and a `Waits` helper class (Java 11+, Selenium 4) that runs the same page checks as the session.
 - Server instructions sent to MCP clients on connect, describing the wait workflow.

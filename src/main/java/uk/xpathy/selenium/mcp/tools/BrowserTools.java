@@ -36,9 +36,11 @@ public class BrowserTools {
     private static final String IMPLICIT_WAIT_DESC = "Wait strategy, to match the framework you are generating tests "
             + "for: Selenium implicit wait in seconds. Omitted: none, as in plain Selenium. See setAutoWait for all options.";
     private static final String NETWORK_IDLE_DESC = "Wait strategy: after each action, wait until no fetch/XHR request "
-            + "has been in flight for this many milliseconds (e.g. 500). Omitted: no network wait. See setAutoWait.";
+            + "has been in flight for this many milliseconds, and report which steps need a network wait in the generated "
+            + "test. Recommended: 500. Omitted: no network wait. See setAutoWait.";
     private static final String ANIMATION_IDLE_DESC = "Wait strategy: after each action, wait until no animation has run "
-            + "for this many milliseconds (e.g. 300). Omitted: no animation wait. See setAutoWait.";
+            + "for this many milliseconds, and report which steps need an animation wait in the generated test. "
+            + "Recommended: 300. Omitted: no animation wait. See setAutoWait.";
 
     private final BrowserSessions sessions;
 

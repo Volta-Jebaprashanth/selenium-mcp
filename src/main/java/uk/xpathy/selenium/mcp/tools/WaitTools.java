@@ -261,8 +261,9 @@ public class WaitTools {
             + "own implicit wait. networkIdleMillis / animationIdleMillis make every action (click, typing, navigation, "
             + "select, mouse/key actions, upload, alert answers) wait afterwards until no fetch/XHR request has been in "
             + "flight, then no animation has run, for that long. Each action then reports what it set off and which wait "
-            + "the generated test needs there. Every call replaces the whole strategy: omitted values are off, and a call "
-            + "with no arguments restores plain Selenium.")
+            + "the generated test needs there. Recommended for almost every app: networkIdleMillis=500 and "
+            + "animationIdleMillis=300, so steps that set off requests or animations aren't missed. Every call replaces "
+            + "the whole strategy: omitted values are off, and a call with no arguments restores plain Selenium.")
     public String setAutoWait(
             @McpToolParam(description = "Selenium implicit wait in seconds (driver.manage().timeouts().implicitlyWait). "
                     + "Every lookup that finds nothing - elementExists, countElements and waitForInvisible included - then "

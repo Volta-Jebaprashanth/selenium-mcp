@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -130,8 +131,24 @@ class AutoWaitMessagesTest {
         String note = AutoWaitMessages.sessionOpened(tools);
 
         assertTrue(note.startsWith("\nWait strategy: none - plain Selenium"), note);
-        assertTrue(note.contains("call setAutoWait to match it"), note);
+        assertTrue(note.contains(AutoWaitMessages.RECOMMENDATION), note);
         assertTrue(note.endsWith(AutoWaitMessages.SNIPPETS_POINTER), note);
+    }
+
+    @Test
+    void openingWithOnlyAnImplicitWaitStillRecommendsTracking() {
+        when(tools.getAutoWait()).thenReturn(new AutoWaitSettings(Duration.ofSeconds(5), Duration.ZERO,
+                AutoWaitSettings.DEFAULT_TIMEOUT, Duration.ZERO, AutoWaitSettings.DEFAULT_TIMEOUT, List.of()));
+
+        assertTrue(AutoWaitMessages.sessionOpened(tools).contains(AutoWaitMessages.RECOMMENDATION));
+    }
+
+    @Test
+    void openingWithTrackingDoesNotRecommendIt() {
+        when(tools.getAutoWait()).thenReturn(new AutoWaitSettings(Duration.ZERO, Duration.ofMillis(500),
+                AutoWaitSettings.DEFAULT_TIMEOUT, Duration.ofMillis(300), AutoWaitSettings.DEFAULT_TIMEOUT, List.of()));
+
+        assertFalse(AutoWaitMessages.sessionOpened(tools).contains("Recommended"));
     }
 
     private static WaitRecord record(Duration covered, int requests, int animations, boolean networkTimedOut) {

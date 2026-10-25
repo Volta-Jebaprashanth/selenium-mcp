@@ -26,6 +26,19 @@ final class AutoWaitMessages {
     static final String SNIPPETS_POINTER = "Before writing test code, call getWaitReport (which steps need a wait) "
             + "and getWaitCodeSnippets (the Java for those waits).";
 
+    /**
+     * The settings recommended for almost every app: they don't change what the generated test does, since
+     * every wait they make is reported as one the test needs, but without them requests and animations an
+     * action sets off go unseen, and the test misses waits that only matter on a slow CI run.
+     */
+    static final String RECOMMENDED_SETTINGS = "networkIdleMillis=500 and animationIdleMillis=300";
+
+    static final String RECOMMENDATION = "Recommended: call setAutoWait with " + RECOMMENDED_SETTINGS
+            + " (plus implicitWaitSeconds if the target framework sets an implicit wait), or pass them to openBrowser. "
+            + "Each action then reports the requests and animations it set off and the wait the generated test needs "
+            + "after it, including waits that only matter on a slow CI run. Without them, only clicks that had to wait "
+            + "for a covering element are reported.";
+
     private AutoWaitMessages() {
     }
 
@@ -56,9 +69,8 @@ final class AutoWaitMessages {
             return "";
         }
         String text = "\nWait strategy: " + describe(settings) + ".";
-        if (settings.isNone()) {
-            text += " If the framework you are generating tests for waits globally (an implicit wait, or a wait "
-                    + "after each action), call setAutoWait to match it, so what passes here also passes in the generated test.";
+        if (!settings.waitsAfterActions()) {
+            text += " " + RECOMMENDATION;
         }
         return text + " " + SNIPPETS_POINTER;
     }
@@ -118,7 +130,8 @@ final class AutoWaitMessages {
             return "\nHint: this session has no wait strategy, so this ran the moment the previous step returned - as a "
                     + "plain Selenium test would. If the page was still loading or animating, the generated test needs an "
                     + "explicit wait before this step (waitForClickable / waitForVisible here, Waits.clickable in the test), "
-                    + "or call setAutoWait if the target framework waits globally.";
+                    + "Recommended: call setAutoWait with " + RECOMMENDED_SETTINGS + " and repeat the flow, so each "
+                    + "step reports the wait it needs.";
         }
         return "\nHint: the session's waits (" + describe(settings) + ") weren't enough for this step. The generated "
                 + "test needs an explicit wait for this element before it (waitForClickable / waitForVisible here, "
@@ -146,8 +159,8 @@ final class AutoWaitMessages {
         }
         if (!tracking) {
             sb.append("\nRequest and animation tracking is off, so only clicks that had to wait for a covering element "
-                    + "are recorded. To see which steps set off requests or animations, call setAutoWait with "
-                    + "networkIdleMillis and/or animationIdleMillis, then repeat the flow.");
+                    + "are recorded. Recommended: call setAutoWait with " + RECOMMENDED_SETTINGS + ", then repeat "
+                    + "the flow to see which steps set off requests or animations.");
         }
         return sb.toString();
     }
