@@ -33,9 +33,9 @@ public class ActionsTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.hover(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
-                return "Hovered over element.";
+                return "Hovered over element." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to hover: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to hover: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -51,9 +51,9 @@ public class ActionsTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.doubleClick(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
-                return "Double-clicked element.";
+                return "Double-clicked element." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to double-click: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to double-click: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -69,9 +69,9 @@ public class ActionsTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.rightClick(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
-                return "Right-clicked element.";
+                return "Right-clicked element." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to right-click: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to right-click: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -87,9 +87,9 @@ public class ActionsTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.clickAndHold(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
-                return "Clicked and held element.";
+                return "Clicked and held element." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to click and hold: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to click and hold: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -101,9 +101,9 @@ public class ActionsTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.release();
-                return "Released mouse button.";
+                return "Released mouse button." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to release: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to release: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -119,9 +119,9 @@ public class ActionsTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.dragAndDrop(sourceLocatorType, sourceLocatorValue, targetLocatorType, targetLocatorValue);
-                return "Dragged element to target.";
+                return "Dragged element to target." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to drag and drop: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to drag and drop: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -139,9 +139,9 @@ public class ActionsTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.dragAndDropByOffset(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), xOffset, yOffset);
-                return "Dragged element by offset (" + xOffset + ", " + yOffset + ")";
+                return "Dragged element by offset (" + xOffset + ", " + yOffset + ")" + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to drag by offset: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to drag by offset: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -154,9 +154,9 @@ public class ActionsTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.pressKey(keyName);
-                return "Pressed key " + keyName;
+                return "Pressed key " + keyName + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to press key: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to press key: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }

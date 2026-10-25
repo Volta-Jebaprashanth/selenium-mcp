@@ -23,9 +23,13 @@ import java.util.Set;
  * {@link AlertHandler}, {@link FrameHandler}, {@link WindowManager}, {@link CookieManager},
  * {@link ScreenshotTaker}, {@link ScriptRunner}, {@link ActionsHelper}, {@link SelectHelper},
  * {@link FileHelper}, {@link NetworkMonitor}, {@link ConsoleLogMonitor}, {@link PageSourceInspector},
- * {@link InitScriptManager})
+ * {@link InitScriptManager}, {@link AutoWaiter})
  * act on the driver for the current session. Any of these can be swapped independently without
  * touching the others.
+ * <p>
+ * Every action (navigation, clicks, typing, mouse and keyboard actions, selects, uploads, alert
+ * answers) runs through {@link AutoWaiter}, which applies the session's {@link AutoWaitSettings} and
+ * records a {@link WaitRecord} of what the action set off. New action methods should do the same.
  * <p>
  * {@link NetworkMonitor} and {@link ConsoleLogMonitor} are CDP-backed and only function against
  * Chrome/Edge; their methods throw {@link UnsupportedOperationException} on other browsers.
@@ -34,6 +38,7 @@ public class Tools {
 
     private final Locators locators;
     private final BrowserSession session;
+    private final WaitCodeGenerator waitCodeGenerator;
 
     private Navigator navigator;
     private ElementInteractor elementInteractor;
@@ -53,6 +58,7 @@ public class Tools {
     private ConsoleLogMonitor consoleLogMonitor;
     private PageSourceInspector pageSourceInspector;
     private InitScriptManager initScriptManager;
+    private AutoWaiter autoWaiter;
 
     public Tools() {
         this(new BrowserFactory());
@@ -61,6 +67,7 @@ public class Tools {
     public Tools(BrowserFactory browserFactory) {
         this.locators = new Locators();
         this.session = new BrowserSession(browserFactory);
+        this.waitCodeGenerator = new WaitCodeGenerator();
     }
 
     /**
@@ -69,6 +76,7 @@ public class Tools {
     public Tools(WebDriver driver) {
         this.locators = new Locators();
         this.session = new BrowserSession(new BrowserFactory(), driver);
+        this.waitCodeGenerator = new WaitCodeGenerator();
         attachCollaborators(driver);
     }
 
@@ -153,6 +161,9 @@ public class Tools {
         if (consoleLogMonitor != null) {
             consoleLogMonitor.close();
         }
+        if (autoWaiter != null && session.isAttached()) {
+            autoWaiter.close();
+        }
         session.close();
         navigator = null;
         elementInteractor = null;
@@ -172,6 +183,7 @@ public class Tools {
         consoleLogMonitor = null;
         pageSourceInspector = null;
         initScriptManager = null;
+        autoWaiter = null;
     }
 
     // -- Locators --
@@ -187,19 +199,19 @@ public class Tools {
     // -- Navigation --
 
     public void navigateTo(String url) {
-        requireNavigator().navigateTo(url);
+        requireAutoWaiter().run("navigate " + url, () -> requireNavigator().navigateTo(url));
     }
 
     public void back() {
-        requireNavigator().back();
+        requireAutoWaiter().run("back", () -> requireNavigator().back());
     }
 
     public void forward() {
-        requireNavigator().forward();
+        requireAutoWaiter().run("forward", () -> requireNavigator().forward());
     }
 
     public void refresh() {
-        requireNavigator().refresh();
+        requireAutoWaiter().run("refresh", () -> requireNavigator().refresh());
     }
 
     public String getCurrentUrl() {
@@ -241,11 +253,11 @@ public class Tools {
     // -- Element interaction --
 
     public void click(By locator) {
-        requireElementInteractor().click(locator);
+        requireAutoWaiter().run("click " + locator, () -> requireElementInteractor().click(locator));
     }
 
     public void click(String locatorType, String locatorValue) {
-        requireElementInteractor().click(locatorType, locatorValue);
+        click(locators.toBy(locatorType, locatorValue));
     }
 
     /**
@@ -253,23 +265,25 @@ public class Tools {
      * intercepts the click.
      */
     public void click(By locator, Duration waitWhileCovered) {
-        requireElementInteractor().click(locator, waitWhileCovered);
+        requireAutoWaiter().runCoverable("click " + locator,
+                () -> requireElementInteractor().click(locator, waitWhileCovered));
     }
 
     public void sendKeys(By locator, String text) {
-        requireElementInteractor().sendKeys(locator, text);
+        sendKeys(locator, text, false);
     }
 
     public void sendKeys(By locator, String text, boolean clearFirst) {
-        requireElementInteractor().sendKeys(locator, text, clearFirst);
+        requireAutoWaiter().run("sendKeys " + locator,
+                () -> requireElementInteractor().sendKeys(locator, text, clearFirst));
     }
 
     public void sendKeys(String locatorType, String locatorValue, String text) {
-        requireElementInteractor().sendKeys(locatorType, locatorValue, text);
+        sendKeys(locators.toBy(locatorType, locatorValue), text, false);
     }
 
     public void sendKeys(String locatorType, String locatorValue, String text, boolean clearFirst) {
-        requireElementInteractor().sendKeys(locatorType, locatorValue, text, clearFirst);
+        sendKeys(locators.toBy(locatorType, locatorValue), text, clearFirst);
     }
 
     // -- Element queries --
@@ -457,14 +471,67 @@ public class Tools {
         requireWaitHelper().waitForNumberOfWindowsToBe(expectedCount, timeoutSeconds);
     }
 
+    // -- Session-wide auto-waits --
+
+    /**
+     * Sets this session's wait strategy: Selenium's implicit wait, and the waits every action makes
+     * afterwards for the network and animations to settle. {@link AutoWaitSettings#NONE} restores plain
+     * Selenium behaviour.
+     */
+    public void setAutoWait(AutoWaitSettings settings) {
+        requireAutoWaiter().apply(settings);
+    }
+
+    public AutoWaitSettings getAutoWait() {
+        return requireAutoWaiter().getSettings();
+    }
+
+    /**
+     * @return whether the auto-wait tracker sees requests from the start of each page load (Chrome/Edge),
+     * rather than only once the page has loaded
+     */
+    public boolean isAutoWaitTrackingFromPageStart() {
+        return requireAutoWaiter().tracksFromPageStart();
+    }
+
+    /**
+     * @return what the last action set off and waited for, or {@code null} if nothing was tracked for it
+     */
+    public WaitRecord getLastWaitRecord() {
+        return requireAutoWaiter().lastRecord();
+    }
+
+    public List<WaitRecord> getWaitRecords() {
+        return requireAutoWaiter().records();
+    }
+
+    public void clearWaitRecords() {
+        requireAutoWaiter().clearRecords();
+    }
+
+    /**
+     * @return a Java {@code Waits} helper class that makes the same waits as {@code settings}, for
+     * generated tests
+     */
+    public String generateWaitsHelper(AutoWaitSettings settings) {
+        return waitCodeGenerator.helperClass(settings);
+    }
+
+    /**
+     * @return the Java a test needs right after creating its driver to wait the way {@code settings} does
+     */
+    public String generateWaitSetup(AutoWaitSettings settings) {
+        return waitCodeGenerator.setup(settings);
+    }
+
     // -- Alerts --
 
     public void acceptAlert() {
-        requireAlertHandler().accept();
+        requireAutoWaiter().run("acceptAlert", () -> requireAlertHandler().accept());
     }
 
     public void dismissAlert() {
-        requireAlertHandler().dismiss();
+        requireAutoWaiter().run("dismissAlert", () -> requireAlertHandler().dismiss());
     }
 
     public String getAlertText() {
@@ -674,93 +741,95 @@ public class Tools {
     // -- Mouse / keyboard actions --
 
     public void hover(By locator) {
-        requireActionsHelper().hover(locator);
+        requireAutoWaiter().run("hover " + locator, () -> requireActionsHelper().hover(locator));
     }
 
     public void hover(String locatorType, String locatorValue) {
-        requireActionsHelper().hover(locatorType, locatorValue);
+        hover(locators.toBy(locatorType, locatorValue));
     }
 
     public void doubleClick(By locator) {
-        requireActionsHelper().doubleClick(locator);
+        requireAutoWaiter().run("doubleClick " + locator, () -> requireActionsHelper().doubleClick(locator));
     }
 
     public void doubleClick(String locatorType, String locatorValue) {
-        requireActionsHelper().doubleClick(locatorType, locatorValue);
+        doubleClick(locators.toBy(locatorType, locatorValue));
     }
 
     public void rightClick(By locator) {
-        requireActionsHelper().rightClick(locator);
+        requireAutoWaiter().run("rightClick " + locator, () -> requireActionsHelper().rightClick(locator));
     }
 
     public void rightClick(String locatorType, String locatorValue) {
-        requireActionsHelper().rightClick(locatorType, locatorValue);
+        rightClick(locators.toBy(locatorType, locatorValue));
     }
 
     public void clickAndHold(By locator) {
-        requireActionsHelper().clickAndHold(locator);
+        requireAutoWaiter().run("clickAndHold " + locator, () -> requireActionsHelper().clickAndHold(locator));
     }
 
     public void clickAndHold(String locatorType, String locatorValue) {
-        requireActionsHelper().clickAndHold(locatorType, locatorValue);
+        clickAndHold(locators.toBy(locatorType, locatorValue));
     }
 
     public void release() {
-        requireActionsHelper().release();
+        requireAutoWaiter().run("releaseClick", () -> requireActionsHelper().release());
     }
 
     public void dragAndDrop(By source, By target) {
-        requireActionsHelper().dragAndDrop(source, target);
+        requireAutoWaiter().run("dragAndDrop " + source + " -> " + target,
+                () -> requireActionsHelper().dragAndDrop(source, target));
     }
 
     public void dragAndDrop(String sourceType, String sourceValue, String targetType, String targetValue) {
-        requireActionsHelper().dragAndDrop(sourceType, sourceValue, targetType, targetValue);
+        dragAndDrop(locators.toBy(sourceType, sourceValue), locators.toBy(targetType, targetValue));
     }
 
     public void dragAndDropByOffset(By locator, int xOffset, int yOffset) {
-        requireActionsHelper().dragAndDropByOffset(locator, xOffset, yOffset);
+        requireAutoWaiter().run("dragAndDropByOffset " + locator,
+                () -> requireActionsHelper().dragAndDropByOffset(locator, xOffset, yOffset));
     }
 
     public void dragAndDropByOffset(String locatorType, String locatorValue, int xOffset, int yOffset) {
-        requireActionsHelper().dragAndDropByOffset(locatorType, locatorValue, xOffset, yOffset);
+        dragAndDropByOffset(locators.toBy(locatorType, locatorValue), xOffset, yOffset);
     }
 
     public void pressKey(String keyName) {
-        requireActionsHelper().pressKey(keyName);
+        requireAutoWaiter().run("pressKey " + keyName, () -> requireActionsHelper().pressKey(keyName));
     }
 
     // -- Select dropdowns --
 
     public void selectByVisibleText(By locator, String text) {
-        requireSelectHelper().selectByVisibleText(locator, text);
+        requireAutoWaiter().run("selectByVisibleText " + locator, () -> requireSelectHelper().selectByVisibleText(locator, text));
     }
 
     public void selectByVisibleText(String locatorType, String locatorValue, String text) {
-        requireSelectHelper().selectByVisibleText(locatorType, locatorValue, text);
+        selectByVisibleText(locators.toBy(locatorType, locatorValue), text);
     }
 
     public void selectByValue(By locator, String value) {
-        requireSelectHelper().selectByValue(locator, value);
+        requireAutoWaiter().run("selectByValue " + locator, () -> requireSelectHelper().selectByValue(locator, value));
     }
 
     public void selectByValue(String locatorType, String locatorValue, String optionValue) {
-        requireSelectHelper().selectByValue(locatorType, locatorValue, optionValue);
+        selectByValue(locators.toBy(locatorType, locatorValue), optionValue);
     }
 
     public void selectByIndex(By locator, int index) {
-        requireSelectHelper().selectByIndex(locator, index);
+        requireAutoWaiter().run("selectByIndex " + locator, () -> requireSelectHelper().selectByIndex(locator, index));
     }
 
     public void selectByIndex(String locatorType, String locatorValue, int index) {
-        requireSelectHelper().selectByIndex(locatorType, locatorValue, index);
+        selectByIndex(locators.toBy(locatorType, locatorValue), index);
     }
 
     public void deselectAllOptions(By locator) {
-        requireSelectHelper().deselectAll(locator);
+        requireAutoWaiter().run("deselectAllOptions " + locator, () -> requireSelectHelper().deselectAll(locator));
     }
 
     public void deselectAllOptions(String locatorType, String locatorValue) {
-        requireSelectHelper().deselectAll(locatorType, locatorValue);
+        deselectAllOptions(locators.toBy(locatorType, locatorValue));
     }
 
     public List<String> getSelectedOptionsText(By locator) {
@@ -782,11 +851,11 @@ public class Tools {
     // -- File upload / PDF printing --
 
     public void uploadFile(By locator, String absoluteFilePath) {
-        requireFileHelper().uploadFile(locator, absoluteFilePath);
+        requireAutoWaiter().run("uploadFile " + locator, () -> requireFileHelper().uploadFile(locator, absoluteFilePath));
     }
 
     public void uploadFile(String locatorType, String locatorValue, String absoluteFilePath) {
-        requireFileHelper().uploadFile(locatorType, locatorValue, absoluteFilePath);
+        uploadFile(locators.toBy(locatorType, locatorValue), absoluteFilePath);
     }
 
     public String printToPdfBase64() {
@@ -884,9 +953,9 @@ public class Tools {
 
     private void attachCollaborators(WebDriver driver) {
         this.navigator = new Navigator(driver);
-        this.elementInteractor = new ElementInteractor(driver, locators);
-        this.elementInspector = new ElementInspector(driver, locators);
         this.clickabilityChecker = new ClickabilityChecker(driver);
+        this.elementInteractor = new ElementInteractor(driver, locators, clickabilityChecker);
+        this.elementInspector = new ElementInspector(driver, locators);
         this.waitHelper = new WaitHelper(driver, locators, clickabilityChecker);
         this.alertHandler = new AlertHandler(driver);
         this.frameHandler = new FrameHandler(driver, locators);
@@ -901,6 +970,7 @@ public class Tools {
         this.consoleLogMonitor = new ConsoleLogMonitor(driver);
         this.pageSourceInspector = new PageSourceInspector(driver, locators);
         this.initScriptManager = new InitScriptManager(driver);
+        this.autoWaiter = new AutoWaiter(driver);
     }
 
     private Navigator requireNavigator() {
@@ -991,5 +1061,10 @@ public class Tools {
     private InitScriptManager requireInitScriptManager() {
         session.requireDriver();
         return initScriptManager;
+    }
+
+    private AutoWaiter requireAutoWaiter() {
+        session.requireDriver();
+        return autoWaiter;
     }
 }

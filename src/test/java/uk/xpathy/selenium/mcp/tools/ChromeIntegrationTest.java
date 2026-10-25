@@ -252,8 +252,10 @@ class ChromeIntegrationTest {
         assertThrows(ElementClickInterceptedException.class, () -> tools.click(under, Duration.ZERO));
 
         tools.executeScript("setTimeout(() => document.getElementById('overlay').remove(), 700)");
-        assertEquals("Clicked element located by id=under",
-                new BrowserTools(sessions).click("id", "under", null, null, 5));
+        String clicked = new BrowserTools(sessions).click("id", "under", null, null, 5);
+        assertTrue(clicked.startsWith("Clicked element located by id=under\n[auto-wait] The target was covered by "
+                + "div#overlay.loading.backdrop when the click was attempted"), clicked);
+        assertTrue(clicked.contains("Waits.clickable(driver, <locator>)"), clicked);
         assertEquals("under", tools.executeScript("return window.clicked"));
         assertEquals("true", tools.checkClickable(under).describe());
     }

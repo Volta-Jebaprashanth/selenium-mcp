@@ -114,7 +114,7 @@ class BrowserSessionsTest {
         doThrow(new RuntimeException("driver already gone")).when(first).quit();
 
         open(null, null);
-        browserTools.connectToBrowser("chrome", "127.0.0.1:9222", "debug");
+        browserTools.connectToBrowser("chrome", "127.0.0.1:9222", null, null, null, "debug");
 
         assertEquals(List.of("default", "debug"), sessions.closeAll());
         verify(service).stop();
@@ -127,10 +127,10 @@ class BrowserSessionsTest {
         when(factory.isDebuggerListening("127.0.0.1:9222")).thenReturn(true);
         when(factory.attach("chrome", "127.0.0.1:9222"))
                 .thenReturn(new AttachedDriver(first, mock(DriverService.class), "127.0.0.1:9222"));
-        browserTools.connectToBrowser("chrome", "127.0.0.1:9222", null);
+        browserTools.connectToBrowser("chrome", "127.0.0.1:9222", null, null, null, null);
 
         assertEquals("Session 'default' is already connected to that browser. Call switchSession to use it.",
-                browserTools.connectToBrowser("chrome", "127.0.0.1:9222", "again"));
+                browserTools.connectToBrowser("chrome", "127.0.0.1:9222", null, null, null, "again"));
     }
 
     @Test
@@ -141,8 +141,8 @@ class BrowserSessionsTest {
         when(factory.launchDebuggable("chrome", 9223, null))
                 .thenReturn(new AttachedDriver(second, mock(DriverService.class), "127.0.0.1:9223"));
 
-        browserTools.launchDebugBrowser("chrome", null, null, null);
-        String launched = browserTools.launchDebugBrowser("chrome", null, null, "second");
+        browserTools.launchDebugBrowser("chrome", null, null, null, null, null, null);
+        String launched = browserTools.launchDebugBrowser("chrome", null, null, null, null, null, "second");
 
         assertTrue(launched.startsWith("Launched chrome with remote debugging on 127.0.0.1:9223 as session 'second'"), launched);
     }
@@ -202,7 +202,23 @@ class BrowserSessionsTest {
         assertEquals("[admin] Failed to get alert text: no such alert", alertTools.getAlertText());
     }
 
+    @Test
+    void openingABrowserStatesItsWaitStrategy() {
+        String opened = browserTools.openBrowser(null, null, null, null, null, null, null, null, null);
+
+        assertTrue(opened.startsWith("chrome browser opened.\nWait strategy: none - plain Selenium"), opened);
+        assertTrue(opened.endsWith(AutoWaitMessages.SNIPPETS_POINTER), opened);
+    }
+
+    /**
+     * @return the open result without the wait strategy lines, which {@link #openingABrowserStatesItsWaitStrategy} covers
+     */
     private String open(String browser, String session) {
-        return browserTools.openBrowser(browser, null, null, null, null, session);
+        return withoutWaitStrategy(browserTools.openBrowser(browser, null, null, null, null, null, null, null, session));
+    }
+
+    static String withoutWaitStrategy(String result) {
+        int at = result.indexOf("\nWait strategy:");
+        return at < 0 ? result : result.substring(0, at);
     }
 }

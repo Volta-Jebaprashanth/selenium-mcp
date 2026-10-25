@@ -9,6 +9,7 @@ import org.openqa.selenium.WebElement;
 
 import java.time.Duration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -21,11 +22,13 @@ class ElementInteractorTest {
 
     private final WebDriver driver = mock(WebDriver.class);
     private final WebElement button = mock(WebElement.class);
-    private final ElementInteractor interactor = new ElementInteractor(driver, new Locators());
+    private final ClickabilityChecker clickability = mock(ClickabilityChecker.class);
+    private final ElementInteractor interactor = new ElementInteractor(driver, new Locators(), clickability);
     private final By locator = By.id("save");
 
     ElementInteractorTest() {
         when(driver.findElement(locator)).thenReturn(button);
+        when(clickability.check(locator)).thenReturn(new ClickabilityChecker.Clickability(true, true, true, null));
     }
 
     @Test
@@ -35,9 +38,21 @@ class ElementInteractorTest {
                 .doNothing()
                 .when(button).click();
 
-        interactor.click(locator, Duration.ofSeconds(5));
+        ElementInteractor.Covered covered = interactor.click(locator, Duration.ofSeconds(5));
 
         verify(button, times(3)).click();
+        assertEquals("another element", covered.by());
+    }
+
+    @Test
+    void anElementCoveredWhenTheClickStartsIsReportedEvenIfTheDriverWaitsItOut() {
+        when(clickability.check(locator)).thenReturn(new ClickabilityChecker.Clickability(true, true, false, "div.loader"));
+        doNothing().when(button).click();
+
+        ElementInteractor.Covered covered = interactor.click(locator, Duration.ofSeconds(5));
+
+        assertEquals("div.loader", covered.by());
+        verify(button, times(1)).click();
     }
 
     @Test
@@ -60,7 +75,7 @@ class ElementInteractorTest {
     void aClickThatWorksIsMadeOnce() {
         doNothing().when(button).click();
 
-        interactor.click(locator, Duration.ofSeconds(5));
+        assertEquals(ElementInteractor.Covered.NONE, interactor.click(locator, Duration.ofSeconds(5)));
 
         verify(button, times(1)).click();
     }
