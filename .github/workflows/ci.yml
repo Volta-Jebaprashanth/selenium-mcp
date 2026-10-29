@@ -217,7 +217,8 @@ jobs:
           # Retries a 409 from the Sigstore transparency log (TLOG_CREATE_ENTRY_ERROR): npm resends
           # an upload Rekor already took and then gives up before publishing. A version the registry
           # took but doesn't serve yet - an earlier attempt or re-run - is rejected as "previously
-          # published"; that counts as done, and wait_until_live waits for it.
+          # published" or, while still being processed, "previously staged"; that counts as done,
+          # and wait_until_live waits for it.
           publish() { # <name> <path-or-tarball>
             if is_live "$1"; then
               echo "$1@$VERSION already published - skipping"
@@ -229,7 +230,7 @@ jobs:
                 return 0
               fi
               echo "$output"
-              if grep -q "previously published" <<<"$output"; then
+              if grep -qE "previously (published|staged)" <<<"$output"; then
                 echo "$1@$VERSION was already accepted by the registry - treating as published"
                 return 0
               fi
