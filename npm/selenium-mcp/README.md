@@ -50,4 +50,4 @@ Any extra arguments are passed to the server, e.g. to load fewer tools:
 
 Logs go to `~/.selenium-mcp/mcp-server.log`.
 
-Full tool reference and documentation: [selenium-mcp.xpathy.uk](https://selenium-mcp.xpathy.uk/) · Source: [GitHub](https://github.com/Volta-Jebaprashanth/selenium-mcp)
+Full tool reference and documentation: [selenium-mcp.voltajeba.com](https://selenium-mcp.voltajeba.com/) · Source: [GitHub](https://github.com/Volta-Jebaprashanth/selenium-mcp)

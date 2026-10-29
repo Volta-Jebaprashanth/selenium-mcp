@@ -2,7 +2,7 @@
 
 Thanks for your interest in improving selenium-mcp. This is an [MCP](https://modelcontextprotocol.io) server that exposes Selenium browser automation to AI agents, built with Spring Boot and Spring AI's MCP server starter. Before opening a PR, please read this guide — it'll save you a review round-trip.
 
-Full docs, the interactive tool reference, and architecture deep-dive live at [selenium-mcp.xpathy.uk](https://selenium-mcp.xpathy.uk/).
+Full docs, the interactive tool reference, and architecture deep-dive live at [selenium-mcp.voltajeba.com](https://selenium-mcp.voltajeba.com/).
 
 ## Code of Conduct
 

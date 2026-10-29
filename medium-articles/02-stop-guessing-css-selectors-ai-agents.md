@@ -1,6 +1,6 @@
 # How to Get an AI Coding Assistant to Write a Correct Selenium Locator on the First Try
 
-> **Quick context:** [selenium-mcp](https://github.com/Volta-Jebaprashanth/selenium-mcp) is a Java-based [Model Context Protocol](https://modelcontextprotocol.io) server that hands an AI coding agent a real Selenium WebDriver session — it opens Chrome, Firefox, or Edge, inspects the actual live page, and writes the Java locator itself instead of guessing from pasted HTML. Built specifically for test automation engineers working in **Java, Selenium, and REST Assured**, it also covers CDP network/console debugging and standalone REST API testing. Repo: [github.com/Volta-Jebaprashanth/selenium-mcp](https://github.com/Volta-Jebaprashanth/selenium-mcp) · Docs: [selenium-mcp.xpathy.uk](https://selenium-mcp.xpathy.uk/)
+> **Quick context:** [selenium-mcp](https://github.com/Volta-Jebaprashanth/selenium-mcp) is a Java-based [Model Context Protocol](https://modelcontextprotocol.io) server that hands an AI coding agent a real Selenium WebDriver session — it opens Chrome, Firefox, or Edge, inspects the actual live page, and writes the Java locator itself instead of guessing from pasted HTML. Built specifically for test automation engineers working in **Java, Selenium, and REST Assured**, it also covers CDP network/console debugging and standalone REST API testing. Repo: [github.com/Volta-Jebaprashanth/selenium-mcp](https://github.com/Volta-Jebaprashanth/selenium-mcp) · Docs: [selenium-mcp.voltajeba.com](https://selenium-mcp.voltajeba.com/)
 
 Every Selenium engineer has written this line of debugging output at least once:
 
@@ -50,4 +50,4 @@ A generic browser-automation agent just needs *a* selector that works once. A te
 
 It's also just cheaper. A page with a few hundred DOM nodes routinely produces 30,000+ characters of raw HTML. Reading that into a prompt every time you need one locator is expensive in tokens and slow to iterate on. `getPageElementsFiltered`, scoped to exactly the elements you're locating, is a fraction of that size — and it comes with the disambiguating context a raw dump never gave you in the first place.
 
-Full parameter list is on the [tool reference](https://selenium-mcp.xpathy.uk/docs/tools); the [repo](https://github.com/Volta-Jebaprashanth/selenium-mcp) has the source if you want to see how the ancestor walk is built (plain Selenium/JS underneath, nothing exotic).
+Full parameter list is on the [tool reference](https://selenium-mcp.voltajeba.com/docs/tools); the [repo](https://github.com/Volta-Jebaprashanth/selenium-mcp) has the source if you want to see how the ancestor walk is built (plain Selenium/JS underneath, nothing exotic).

@@ -30,6 +30,7 @@ once it reaches a 1.0.0 release.
 ### Changed
 
 - The npm package is now `@voltajeba/selenium-mcp`, with platform packages `@voltajeba/selenium-mcp-<platform>-<arch>`. `@xpathy/selenium-mcp` is still released with every version as an alias that installs and runs it, so existing configs keep working.
+- The docs site moved from `selenium-mcp.xpathy.uk` to [selenium-mcp.voltajeba.com](https://selenium-mcp.voltajeba.com/), and every link and package `homepage` points there.
 - Java packages moved from `uk.xpathy.selenium.mcp` to `com.voltajeba.selenium.mcp`, and the Maven `groupId` from `uk.xpathy.selenium.mcp` to `com.voltajeba.selenium.mcp`. Code that uses `webdriver/Tools` or `http/ApiClient` as a library needs its imports updated.
 - `takeScreenshot` and `takeElementScreenshot` return the image as MCP image content instead of a base64 string, so clients can show it to the model directly. Images too large to send inline ask for `filePath` instead.
 - `waitForClickable` also waits until no other element covers the target, rather than stopping at visible + enabled.

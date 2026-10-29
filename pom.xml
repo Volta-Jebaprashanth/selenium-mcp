@@ -15,7 +15,7 @@
 <version>${revision}</version>
 <name>selenium-mcp</name>
 <description>A Java-based MCP server that lets AI agents drive real browsers through Selenium WebDriver with token-efficient structured element discovery instead of raw HTML dumps.</description>
-<url>https://selenium-mcp.xpathy.uk/</url>
+<url>https://selenium-mcp.voltajeba.com/</url>
 
 <properties>
     <!-- Single source of the version; CI overrides it with -Drevision=<release version>. -->

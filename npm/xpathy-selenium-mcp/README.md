@@ -17,4 +17,4 @@ For new setups, use the new name:
 
 selenium-mcp is a [Model Context Protocol](https://modelcontextprotocol.io) server that lets AI coding assistants (Claude Code, Cursor, VS Code, Claude Desktop) drive a real Chrome, Edge, or Firefox through Selenium WebDriver, built for Java/Selenium/REST Assured test automation engineers. It bundles its own Java runtime, so you don't need Java installed.
 
-Setup, options and the full tool reference: [@voltajeba/selenium-mcp](https://www.npmjs.com/package/@voltajeba/selenium-mcp) · [selenium-mcp.xpathy.uk](https://selenium-mcp.xpathy.uk/) · Source: [GitHub](https://github.com/Volta-Jebaprashanth/selenium-mcp)
+Setup, options and the full tool reference: [@voltajeba/selenium-mcp](https://www.npmjs.com/package/@voltajeba/selenium-mcp) Â· [selenium-mcp.voltajeba.com](https://selenium-mcp.voltajeba.com/) Â· Source: [GitHub](https://github.com/Volta-Jebaprashanth/selenium-mcp)

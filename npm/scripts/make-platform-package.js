@@ -29,7 +29,7 @@ const pkg = {
   name,
   version,
   description: `Java runtime and server jar for @voltajeba/selenium-mcp on ${process.platform}-${process.arch}. Install @voltajeba/selenium-mcp instead of this package.`,
-  homepage: 'https://selenium-mcp.xpathy.uk/',
+  homepage: 'https://selenium-mcp.voltajeba.com/',
   repository: {
     type: 'git',
     url: 'git+https://github.com/Volta-Jebaprashanth/selenium-mcp.git',

@@ -1,6 +1,6 @@
 # I Stopped Reproducing Failed Selenium Tests. Now the AI Debugs Them in the Browser They Failed In
 
-> **Quick context:** [selenium-mcp](https://github.com/Volta-Jebaprashanth/selenium-mcp) is a Java-based [Model Context Protocol](https://modelcontextprotocol.io) server built for test automation engineers working in **Java, Selenium, and REST Assured**. It gives an AI coding agent a real Selenium WebDriver session to drive Chrome, Firefox, or Edge directly — structured element discovery for reliable locators, Chrome DevTools Protocol network/console tooling, and a standalone REST client, all in one server. Repo: [github.com/Volta-Jebaprashanth/selenium-mcp](https://github.com/Volta-Jebaprashanth/selenium-mcp) · Docs: [selenium-mcp.xpathy.uk](https://selenium-mcp.xpathy.uk/)
+> **Quick context:** [selenium-mcp](https://github.com/Volta-Jebaprashanth/selenium-mcp) is a Java-based [Model Context Protocol](https://modelcontextprotocol.io) server built for test automation engineers working in **Java, Selenium, and REST Assured**. It gives an AI coding agent a real Selenium WebDriver session to drive Chrome, Firefox, or Edge directly — structured element discovery for reliable locators, Chrome DevTools Protocol network/console tooling, and a standalone REST client, all in one server. Repo: [github.com/Volta-Jebaprashanth/selenium-mcp](https://github.com/Volta-Jebaprashanth/selenium-mcp) · Docs: [selenium-mcp.voltajeba.com](https://selenium-mcp.voltajeba.com/)
 
 I write and maintain Selenium tests in Java for a living, and I can tell you where most of my debugging time goes. It isn't fixing the test. It's getting back to the place where the test broke.
 
@@ -93,4 +93,4 @@ The slow part of debugging a UI test was never the fix. It was getting back to t
 
 My part is down to one prompt and a code review.
 
-Full parameter details for `launchDebugBrowser`, `connectToBrowser` and the rest are in the [tool reference](https://selenium-mcp.xpathy.uk/docs/tools). If you've got a red test sitting in your suite right now, it's a good one to try this on.
+Full parameter details for `launchDebugBrowser`, `connectToBrowser` and the rest are in the [tool reference](https://selenium-mcp.voltajeba.com/docs/tools). If you've got a red test sitting in your suite right now, it's a good one to try this on.
