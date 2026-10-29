@@ -20,6 +20,7 @@ once it reaches a 1.0.0 release.
 - `index`/`visibleOnly` on every remaining single-element tool (element state and geometry queries, waits, select, `uploadFile`, `switchToFrame`, `clickAndHold`, `dragAndDropByOffset`), and `visibleOnly` on the tools that act on every match.
 - Multiple browser sessions: `openBrowser`, `connectToBrowser` and `launchDebugBrowser` take an optional `session` name to run several browsers at once (up to `--selenium.mcp.max-sessions`, default 5); new `listSessions` and `switchSession` tools; `closeBrowser` takes `session` and `all`. Every tool acts on the active session, and while several are open, status messages and every tool's failures start with `[session]` so they say which browser they came from.
 - npm distribution with a bundled Java runtime: `npx -y @xpathy/selenium-mcp`, no JDK install needed (Windows x64, Linux x64, macOS Intel/Apple Silicon). See the README's Quick start. The launcher repairs an npx cache that's missing its platform package, and releases are published via npm trusted publishing.
+- The npm package is also published as `@voltajeba/selenium-mcp`, an alias that installs and runs `@xpathy/selenium-mcp` of the same version.
 - `takeScreenshot` `fullPage` option for capturing the whole scrollable page (Chrome/Edge via raw CDP, Firefox natively).
 - `executeScript` `timeoutMs` option to override the 30-second script timeout per call.
 - `addInitScript` / `removeInitScript` tools: JavaScript that runs on every page load in the current tab (Chrome/Edge).

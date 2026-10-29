@@ -173,11 +173,13 @@ jobs:
   # registry actually serves each platform version before publishing the launcher: npm
   # processes large uploads asynchronously (the first publish took ~10 minutes), and an
   # `npx` that resolves the launcher before its runtime is servable caches an install
-  # without one. Already-published versions are skipped, so a failed run can be re-run.
+  # without one. The @voltajeba/selenium-mcp alias, which depends on the launcher, goes out
+  # once the launcher is served, for the same reason. Already-published versions are skipped,
+  # so a failed run can be re-run.
   #
   # Authenticates with npm trusted publishing (GitHub OIDC; needs npm >= 11.5.1 and the
   # id-token permission). The NPM_TOKEN secret is only a fallback until trusted publishing
-  # is configured on npmjs.com for every @xpathy package; delete the secret afterwards.
+  # is configured on npmjs.com for every @xpathy and @voltajeba package; delete the secret afterwards.
   publish-npm:
     needs: [build, bundle, release]
     runs-on: ubuntu-latest
@@ -242,15 +244,16 @@ jobs:
             done
           }
 
-          wait_until_live() { # <name>
-            for _ in $(seq 1 90); do
+          # Large platform packages have taken close to an hour to be served.
+          wait_until_live() { # <name> <what waits on it>
+            for _ in $(seq 1 270); do
               if is_live "$1"; then
                 echo "$1@$VERSION is live"
                 return 0
               fi
               sleep 20
             done
-            echo "::error::$1@$VERSION still not served by the registry after 30 minutes - not publishing the launcher. Re-run this job once it is."
+            echo "::error::$1@$VERSION still not served by the registry after 90 minutes - not publishing $2. Re-run this job once it is."
             return 1
           }
 
@@ -263,8 +266,11 @@ jobs:
           done
 
           for name in "${platform_packages[@]}"; do
-            wait_until_live "$name"
+            wait_until_live "$name" "the launcher"
           done
 
           node npm/scripts/set-version.js "$VERSION"
           publish "@xpathy/selenium-mcp" ./npm/selenium-mcp
+
+          wait_until_live "@xpathy/selenium-mcp" "@voltajeba/selenium-mcp"
+          publish "@voltajeba/selenium-mcp" ./npm/voltajeba-selenium-mcp
