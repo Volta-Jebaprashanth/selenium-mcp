@@ -182,7 +182,7 @@ jobs:
   # Already-published versions are skipped, so a failed run can be re-run.
   #
   # Authenticates with npm trusted publishing (GitHub OIDC; needs npm >= 11.5.1 and the
-  # id-token permission). The NPM_TOKEN secret is only a fallback until trusted publishing
+  # id-token permission). The NPM_TOKEN_2 secret is only a fallback until trusted publishing
   # is configured on npmjs.com for every @xpathy and @voltajeba package; delete the secret afterwards.
   publish-npm:
     needs: [build, bundle, release]
@@ -214,7 +214,7 @@ jobs:
 
       - name: Publish to npm
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_2 }}
         run: |
           is_live() { # <name> - true once the registry serves <name>@$VERSION
             npm view "$1@$VERSION" version --prefer-online >/dev/null 2>&1
