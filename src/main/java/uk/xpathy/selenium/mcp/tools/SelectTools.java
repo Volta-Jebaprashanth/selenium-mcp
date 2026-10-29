@@ -35,9 +35,9 @@ public class SelectTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.selectByVisibleText(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), text);
-                return "Selected option with text \"" + text + "\"";
+                return "Selected option with text \"" + text + "\"" + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -54,9 +54,9 @@ public class SelectTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.selectByValue(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), optionValue);
-                return "Selected option with value \"" + optionValue + "\"";
+                return "Selected option with value \"" + optionValue + "\"" + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -73,9 +73,9 @@ public class SelectTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.selectByIndex(tools.locator(locatorType, locatorValue, elementIndex, Boolean.TRUE.equals(visibleOnly)), index);
-                return "Selected option at index " + index;
+                return "Selected option at index " + index + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to select option: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -91,9 +91,9 @@ public class SelectTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.deselectAllOptions(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)));
-                return "Deselected all options.";
+                return "Deselected all options." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to deselect options: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to deselect options: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }

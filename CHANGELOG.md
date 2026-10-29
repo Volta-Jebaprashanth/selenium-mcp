@@ -10,6 +10,10 @@ once it reaches a 1.0.0 release.
 
 ### Added
 
+- Session wait strategy for generated tests: `setAutoWait` / `getAutoWait`, and `implicitWaitSeconds` / `networkIdleMillis` / `animationIdleMillis` on `openBrowser`, `connectToBrowser` and `launchDebugBrowser`. Sessions still default to plain Selenium, and the server recommends `networkIdleMillis=500` / `animationIdleMillis=300` to the agent. When set, every action waits afterwards for fetch/XHR requests and then animations to settle, using an in-page tracker. Each action reports what it set off and which wait the generated test needs there, and failures a missing wait causes get a hint.
+- `getWaitReport`: the steps whose generated code needs a wait. `closeBrowser` prints it before discarding it.
+- `getWaitCodeSnippets`: usage rules, setup lines and a `Waits` helper class (Java 11+, Selenium 4) that runs the same page checks as the session.
+- Server instructions sent to MCP clients on connect, describing the wait workflow.
 - `text` and `partialText` locator strategies: find an element by the words on screen, e.g. `text=Create Put`, without writing XPath.
 - `isClickable` tool, and `visible`/`enabled`/`clickable` flags (plus `coveredBy`) on interactive elements in `getPageElements` and on every match in `getPageElementsFiltered`. Clickable means displayed, enabled and not covered by another element such as a loading overlay.
 - `click` retries while another element intercepts the click, up to `waitIfCoveredSeconds` (default 5).
@@ -27,6 +31,7 @@ once it reaches a 1.0.0 release.
 
 - `takeScreenshot` and `takeElementScreenshot` return the image as MCP image content instead of a base64 string, so clients can show it to the model directly. Images too large to send inline ask for `filePath` instead.
 - `waitForClickable` also waits until no other element covers the target, rather than stopping at visible + enabled.
+- `click` reports when its target was covered at the moment it was attempted, even when the driver itself held the click until the cover went (newer chromedriver versions do), since the generated test has to wait for it too.
 - Browsers are closed (attached ones disconnected) when the server shuts down, instead of being left running. On Windows the npm launcher now runs the server detached and feeds it stdin, so a client killing the launcher no longer kills the server mid-flight and orphans chromedriver and browser processes.
 - A browser that was closed by hand or crashed no longer stays "open": tool errors say the browser is gone and what to do, and `openBrowser`/`connectToBrowser`/`launchDebugBrowser`/`listSessions`/`switchSession` drop the dead session.
 - CI runs the headless Chrome integration tests on every build.

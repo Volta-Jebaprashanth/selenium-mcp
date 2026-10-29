@@ -5,8 +5,10 @@ import org.openqa.selenium.WebDriverException;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Component;
+import uk.xpathy.selenium.mcp.webdriver.AutoWaitSettings;
 import uk.xpathy.selenium.mcp.webdriver.BrowserOptions;
 import uk.xpathy.selenium.mcp.webdriver.Tools;
+import uk.xpathy.selenium.mcp.webdriver.WaitRecord;
 
 import java.time.Duration;
 import java.util.List;
@@ -31,6 +33,15 @@ public class BrowserTools {
             + "Only needed to run several browsers at once: the first browser is named 'default', and opening "
             + "another alongside it requires a name. The new session becomes the active one that all tools act on.";
 
+    private static final String IMPLICIT_WAIT_DESC = "Wait strategy, to match the framework you are generating tests "
+            + "for: Selenium implicit wait in seconds. Omitted: none, as in plain Selenium. See setAutoWait for all options.";
+    private static final String NETWORK_IDLE_DESC = "Wait strategy: after each action, wait until no fetch/XHR request "
+            + "has been in flight for this many milliseconds, and report which steps need a network wait in the generated "
+            + "test. Recommended: 500. Omitted: no network wait. See setAutoWait.";
+    private static final String ANIMATION_IDLE_DESC = "Wait strategy: after each action, wait until no animation has run "
+            + "for this many milliseconds, and report which steps need an animation wait in the generated test. "
+            + "Recommended: 300. Omitted: no animation wait. See setAutoWait.";
+
     private final BrowserSessions sessions;
 
     public BrowserTools(BrowserSessions sessions) {
@@ -50,6 +61,12 @@ public class BrowserTools {
             String windowSize,
             @McpToolParam(description = "Custom User-Agent string to launch the browser with.", required = false)
             String userAgent,
+            @McpToolParam(description = IMPLICIT_WAIT_DESC, required = false)
+            Integer implicitWaitSeconds,
+            @McpToolParam(description = NETWORK_IDLE_DESC, required = false)
+            Long networkIdleMillis,
+            @McpToolParam(description = ANIMATION_IDLE_DESC, required = false)
+            Long animationIdleMillis,
             @McpToolParam(description = SESSION_DESC, required = false)
             String session) {
         synchronized (sessions) {
@@ -62,8 +79,13 @@ public class BrowserTools {
             try {
                 BrowserOptions options = new BrowserOptions(
                         Boolean.TRUE.equals(headless), Boolean.TRUE.equals(incognito), windowSize, userAgent);
-                Tools tools = sessions.open(name, t -> t.openBrowser(browser, options));
-                return note + tools.getBrowserName() + " browser opened" + sessionSuffix(name) + ".";
+                AutoWaitSettings waits = waitSettings(implicitWaitSeconds, networkIdleMillis, animationIdleMillis);
+                Tools tools = sessions.open(name, t -> {
+                    t.openBrowser(browser, options);
+                    t.setAutoWait(waits);
+                });
+                return note + tools.getBrowserName() + " browser opened" + sessionSuffix(name) + "."
+                        + AutoWaitMessages.sessionOpened(tools);
             } catch (IllegalArgumentException e) {
                 return note + ErrorMessages.of(e);
             } catch (Exception e) {
@@ -82,6 +104,12 @@ public class BrowserTools {
             String browser,
             @McpToolParam(description = "Remote-debugging address as host:port. Defaults to 127.0.0.1:9222.", required = false)
             String debuggerAddress,
+            @McpToolParam(description = IMPLICIT_WAIT_DESC, required = false)
+            Integer implicitWaitSeconds,
+            @McpToolParam(description = NETWORK_IDLE_DESC, required = false)
+            Long networkIdleMillis,
+            @McpToolParam(description = ANIMATION_IDLE_DESC, required = false)
+            Long animationIdleMillis,
             @McpToolParam(description = SESSION_DESC, required = false)
             String session) {
         synchronized (sessions) {
@@ -96,9 +124,14 @@ public class BrowserTools {
                 if (owner != null) {
                     return note + "Session '" + owner + "' is already connected to that browser. Call switchSession to use it.";
                 }
-                Tools tools = sessions.open(name, t -> t.attachBrowser(browser, debuggerAddress));
+                AutoWaitSettings waits = waitSettings(implicitWaitSeconds, networkIdleMillis, animationIdleMillis);
+                Tools tools = sessions.open(name, t -> {
+                    t.attachBrowser(browser, debuggerAddress);
+                    t.setAutoWait(waits);
+                });
                 return note + "Connected to " + tools.getBrowserName() + " at " + tools.getDebuggerAddress() + sessionSuffix(name)
-                        + " (current page: " + tools.getCurrentUrl() + "). closeBrowser will disconnect and leave it running.";
+                        + " (current page: " + tools.getCurrentUrl() + "). closeBrowser will disconnect and leave it running."
+                        + AutoWaitMessages.sessionOpened(tools);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 return note + ErrorMessages.of(e);
             } catch (WebDriverException e) {
@@ -122,6 +155,12 @@ public class BrowserTools {
             @McpToolParam(description = "Profile directory for the browser. Defaults to a dedicated folder under the "
                     + "system temp dir; Chrome refuses remote debugging on your everyday profile.", required = false)
             String userDataDir,
+            @McpToolParam(description = IMPLICIT_WAIT_DESC, required = false)
+            Integer implicitWaitSeconds,
+            @McpToolParam(description = NETWORK_IDLE_DESC, required = false)
+            Long networkIdleMillis,
+            @McpToolParam(description = ANIMATION_IDLE_DESC, required = false)
+            Long animationIdleMillis,
             @McpToolParam(description = SESSION_DESC, required = false)
             String session) {
         synchronized (sessions) {
@@ -139,16 +178,23 @@ public class BrowserTools {
                     return note + "Session '" + owner + "' is already connected to port " + debugPort
                             + ". Call switchSession to use it, or pass a different port.";
                 }
+                AutoWaitSettings waits = waitSettings(implicitWaitSeconds, networkIdleMillis, animationIdleMillis);
                 if (sessions.active().isDebuggerListening(address)) {
-                    Tools tools = sessions.open(name, t -> t.attachBrowser(browser, address));
+                    Tools tools = sessions.open(name, t -> {
+                        t.attachBrowser(browser, address);
+                        t.setAutoWait(waits);
+                    });
                     return note + "A browser was already listening on " + address + "; connected to "
                             + tools.getBrowserName() + " there" + sessionSuffix(name)
-                            + " (current page: " + tools.getCurrentUrl() + ").";
+                            + " (current page: " + tools.getCurrentUrl() + ")." + AutoWaitMessages.sessionOpened(tools);
                 }
-                sessions.open(name, t -> t.launchDebugBrowser(browser, debugPort, userDataDir));
-                return note + "Launched " + sessions.active().getBrowserName() + " with remote debugging on " + address
+                Tools tools = sessions.open(name, t -> {
+                    t.launchDebugBrowser(browser, debugPort, userDataDir);
+                    t.setAutoWait(waits);
+                });
+                return note + "Launched " + tools.getBrowserName() + " with remote debugging on " + address
                         + sessionSuffix(name) + ". Test code can attach with debuggerAddress " + address
-                        + ". closeBrowser will disconnect and leave it running.";
+                        + ". closeBrowser will disconnect and leave it running." + AutoWaitMessages.sessionOpened(tools);
             } catch (IllegalArgumentException | IllegalStateException e) {
                 return note + ErrorMessages.of(e);
             } catch (WebDriverException e) {
@@ -173,7 +219,7 @@ public class BrowserTools {
                 if (tools.isAttached()) {
                     sb.append(", attached at ").append(tools.getDebuggerAddress());
                 }
-                sb.append(", ").append(currentUrlOf(tools)).append('\n');
+                sb.append(", ").append(currentUrlOf(tools)).append(", waits: ").append(waitsOf(tools)).append('\n');
             });
             return note + sb.append("(* = active session)").toString();
         }
@@ -217,6 +263,7 @@ public class BrowserTools {
                 return "No session named '" + name + "'. " + openSessionNames();
             }
             Tools tools = sessions.all().get(name);
+            String report = pendingReport(tools);
             String message = tools.isAttached()
                     ? "Disconnected from " + tools.getBrowserName() + " at " + tools.getDebuggerAddress()
                             + "; the browser is still running."
@@ -226,6 +273,7 @@ public class BrowserTools {
             } catch (Exception e) {
                 message = "Session '" + name + "' was closed, but the browser reported an error: " + ErrorMessages.of(e);
             }
+            message += report;
             return sessions.isEmpty() ? message : message + " Active session is now '" + sessions.activeName() + "'.";
         }
     }
@@ -242,7 +290,7 @@ public class BrowserTools {
             }
             try {
                 tools.navigateTo(url);
-                return sessions.label() + "Navigated to " + url;
+                return sessions.label() + "Navigated to " + url + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
                 return sessions.label() + "Failed to navigate: " + ErrorMessages.of(e);
             }
@@ -258,7 +306,7 @@ public class BrowserTools {
             }
             try {
                 tools.back();
-                return sessions.label() + "Navigated back.";
+                return sessions.label() + "Navigated back." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
                 return sessions.label() + "Failed to navigate back: " + ErrorMessages.of(e);
             }
@@ -274,7 +322,7 @@ public class BrowserTools {
             }
             try {
                 tools.forward();
-                return sessions.label() + "Navigated forward.";
+                return sessions.label() + "Navigated forward." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
                 return sessions.label() + "Failed to navigate forward: " + ErrorMessages.of(e);
             }
@@ -290,7 +338,7 @@ public class BrowserTools {
             }
             try {
                 tools.refresh();
-                return sessions.label() + "Page refreshed.";
+                return sessions.label() + "Page refreshed." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
                 return sessions.label() + "Failed to refresh: " + ErrorMessages.of(e);
             }
@@ -343,7 +391,8 @@ public class BrowserTools {
     }
 
     @McpTool(description = "Click an element on the current page, located by a strategy and value. If another element "
-            + "covers it (e.g. a loading overlay), the click is retried until it clears, up to waitIfCoveredSeconds.")
+            + "covers it (e.g. a loading overlay), the click is retried until it clears, up to waitIfCoveredSeconds; the result "
+            + "then says so, since the generated test has to wait for that too.")
     public String click(
             @McpToolParam(description = "Locator strategy: id, name, css, xpath, className, linkText, partialLinkText, tagName, text (exact visible text, e.g. Create Put), or partialText (visible text contains)", required = true)
             String locatorType,
@@ -362,13 +411,14 @@ public class BrowserTools {
             int wait = waitIfCoveredSeconds == null ? DEFAULT_WAIT_IF_COVERED_SECONDS : Math.max(0, waitIfCoveredSeconds);
             try {
                 tools.click(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), Duration.ofSeconds(wait));
-                return sessions.label() + "Clicked element located by " + locatorType + "=" + locatorValue;
+                return sessions.label() + "Clicked element located by " + locatorType + "=" + locatorValue
+                        + AutoWaitMessages.afterAction(tools);
             } catch (ElementClickInterceptedException e) {
                 return sessions.label() + "Failed to click element: another element still covered it after " + wait
                         + "s. Wait for that element to go away (e.g. waitForInvisible on it) or raise waitIfCoveredSeconds. "
-                        + ErrorMessages.of(e);
+                        + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             } catch (Exception e) {
-                return sessions.label() + "Failed to click element: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to click element: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -392,9 +442,10 @@ public class BrowserTools {
             }
             try {
                 tools.sendKeys(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), text, Boolean.TRUE.equals(clearFirst));
-                return sessions.label() + "Sent keys to element located by " + locatorType + "=" + locatorValue;
+                return sessions.label() + "Sent keys to element located by " + locatorType + "=" + locatorValue
+                        + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to send keys: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to send keys: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -455,6 +506,33 @@ public class BrowserTools {
 
     private String openSessionNames() {
         return sessions.isEmpty() ? NO_BROWSER : "Open sessions: " + String.join(", ", sessions.all().keySet()) + ".";
+    }
+
+    private static AutoWaitSettings waitSettings(Integer implicitWaitSeconds, Long networkIdleMillis, Long animationIdleMillis) {
+        return WaitTools.toSettings(implicitWaitSeconds, networkIdleMillis, null, animationIdleMillis, null, null);
+    }
+
+    private static String waitsOf(Tools tools) {
+        try {
+            AutoWaitSettings settings = tools.getAutoWait();
+            return settings.isNone() ? "none" : AutoWaitMessages.describe(settings);
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    /**
+     * @return the session's wait report, if it has steps that need a wait, since closing loses it
+     */
+    private static String pendingReport(Tools tools) {
+        try {
+            if (tools.getWaitRecords().stream().anyMatch(WaitRecord::needsWait)) {
+                return "\nThe session's wait report, which closing discards:\n" + AutoWaitMessages.report(tools);
+            }
+        } catch (Exception ignored) {
+            // the browser may already be gone; there is nothing left to report
+        }
+        return "";
     }
 
     private static String currentUrlOf(Tools tools) {

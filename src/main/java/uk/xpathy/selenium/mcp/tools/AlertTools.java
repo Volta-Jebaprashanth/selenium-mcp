@@ -25,9 +25,9 @@ public class AlertTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.acceptAlert();
-                return "Alert accepted.";
+                return "Alert accepted." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to accept alert: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to accept alert: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }
@@ -39,9 +39,9 @@ public class AlertTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.dismissAlert();
-                return "Alert dismissed.";
+                return "Alert dismissed." + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to dismiss alert: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to dismiss alert: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }

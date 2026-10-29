@@ -32,8 +32,17 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      # Worked out before the build so the jar, and the version the server reports to MCP
+      # clients, carry the same release version as the GitHub release and npm packages.
+      - name: Determine release version
+        id: version
+        run: |
+          RAW_VERSION=$(mvn -q -B help:evaluate -Dexpression=project.version -DforceStdout)
+          BASE_VERSION=${RAW_VERSION%-SNAPSHOT}
+          echo "version=${BASE_VERSION}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
       - name: Build
-        run: mvn -B clean package
+        run: mvn -B clean package -Drevision=${{ steps.version.outputs.version }}
 
       # Unit tests already ran in the Build step; this adds the tests that drive the Chrome
       # preinstalled on the runner. A failure here after a runner image update usually means
@@ -44,16 +53,9 @@ jobs:
       - name: Test against headless Chrome
         timeout-minutes: 10
         run: >-
-          mvn -B test -Dselenium.it=true
+          mvn -B test -Dselenium.it=true -Drevision=${{ steps.version.outputs.version }}
           -Djunit.jupiter.execution.timeout.default=2m
           -Djunit.jupiter.execution.timeout.thread.mode.default=SEPARATE_THREAD
-
-      - name: Determine release version
-        id: version
-        run: |
-          RAW_VERSION=$(mvn -q -B help:evaluate -Dexpression=project.version -DforceStdout)
-          BASE_VERSION=${RAW_VERSION%-SNAPSHOT}
-          echo "version=${BASE_VERSION}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
 
       - name: Upload jar artifact
         uses: actions/upload-artifact@v7

@@ -140,7 +140,7 @@ Groups: `actions`, `alerts`, `api`, `cookies`, `elements`, `files`, `frames`, `n
 "args": ["-jar", "/absolute/path/to/selenium-mcp.jar", "--selenium.mcp.exclude-tool-groups=api,network,cookies,alerts,select,files"]
 ```
 
-Or allow-list instead: `--selenium.mcp.tool-groups=elements,page-source,wait,script,screenshots`. The exclude example above takes the server from 118 tools to 77.
+Or allow-list instead: `--selenium.mcp.tool-groups=elements,page-source,wait,script,screenshots`. The exclude example above takes the server from 123 tools to 82.
 
 ### Running several browsers
 
@@ -153,9 +153,35 @@ One server can drive several browsers at once, e.g. an admin and a customer logg
 
 While more than one session is open, navigation, `click`, `sendKeys`, `getTitle` and `getCurrentUrl` results are prefixed with the session name, e.g. `[admin] Navigated to ...`. Tool calls still run one at a time. At most 5 sessions can be open; raise that with `--selenium.mcp.max-sessions=<n>`. All sessions are closed when the server shuts down. A session whose browser was closed by hand or crashed is dropped the next time `openBrowser`, `listSessions` or `switchSession` runs; until then, tools on it answer that the browser is no longer reachable.
 
+### Wait strategy for generated tests
+
+This server is for generating Selenium tests, so by default a session behaves like plain Selenium: no implicit wait, and nothing waited for after an action. A step that only passes because the server quietly waited would fail in the generated test. Instead, you set the session's wait strategy to match the framework you are generating for, and the server tells the agent exactly which waits the test needs and where.
+
+1. **Set the strategy** when opening the browser (`openBrowser`/`connectToBrowser`/`launchDebugBrowser` take `implicitWaitSeconds`, `networkIdleMillis`, `animationIdleMillis`) or at any point with `setAutoWait`. That tool also takes timeouts and `ignoreUrls`, for background requests such as analytics or long polling.
+   - **Recommended for almost every app: `networkIdleMillis=500` and `animationIdleMillis=300`.** These don't hide anything from the generated test: every wait they make is reported as one the test needs. Without them, requests and animations an action sets off go unseen, and the test misses waits that only matter on a slow CI run. The server recommends them to the agent on connect, when a browser opens without them, and when a step fails the way a missing wait makes it fail.
+   - `implicitWaitSeconds` is Selenium's own `implicitlyWait`, with the same semantics: a lookup that finds nothing, including `elementExists` and `countElements`, waits the full timeout first.
+   - `networkIdleMillis` makes every action wait afterwards until no fetch/XHR request has been in flight for that long.
+   - `animationIdleMillis` then waits until no CSS transition/animation or Web Animation has run for that long. Animations that repeat forever, such as spinners, are ignored.
+   - Timing out is not an error: the action already happened, and the result says what was still busy.
+2. **Each action reports what it set off.** Navigation, clicks, typing, selects, mouse and key actions, uploads and alert answers all do. The report covers any request or animation the action started, however fast it finished, since a request that takes 40 ms locally can take seconds in CI. It also names the wait the generated test needs at that step:
+   ```
+   Clicked element located by id=save
+   [auto-wait] This step set off 1 request(s). Waited 820ms for network idle. In the generated test, follow this step with: Waits.networkIdle(driver);
+   ```
+   A click whose target was covered when it was attempted (by an overlay or spinner) is reported too, whatever the strategy, because `click` retrying through `waitIfCoveredSeconds` is a wait the test has to make as well.
+3. **Failures caused by a missing wait get a hint.** These are no-such-element, click-intercepted, not-interactable and stale-element failures. The hint says what the generated test needs before that step.
+4. **Before writing the test**, `getWaitReport` lists the steps that need a wait and which one. `closeBrowser` prints the report too, since closing discards it. `getWaitCodeSnippets` returns:
+   - usage rules: conditions not sleeps, waits only where the report says, no mixing of implicit and explicit waits, reusing the project's own wait utilities;
+   - the setup lines for right after creating the driver;
+   - a `Waits` helper class (`clickable`, `networkIdle`, `animationsIdle`, `afterAction`), for Java 11+ and Selenium 4.
+
+The helper runs the same page scripts the server runs: the fetch/XHR and animation tracker, and the covered-element check. A step that settled in the session therefore settles in the test by the same rule. On Chrome/Edge the tracker is registered to run from the start of every page load. On other browsers it is installed once a page has loaded, so requests made during the load aren't seen, and the results say so.
+
+The server's instructions, sent to the client on connect, tell the agent about this workflow. Most clients put them in the agent's system prompt.
+
 ## Available tools
 
-For the full searchable tool surface (118 tools across 16 categories) with parameters and examples, see the [MCP Tools Reference](https://selenium-mcp.xpathy.uk/docs/tools) on the docs site. Summary by category below.
+For the full searchable tool surface (123 tools across 16 categories) with parameters and examples, see the [MCP Tools Reference](https://selenium-mcp.xpathy.uk/docs/tools) on the docs site. Summary by category below.
 
 Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpath`, `className`/`class`, `linkText`, `partialLinkText`, `tagName`/`tag`, `text`, `partialText`.
 
@@ -163,7 +189,7 @@ Locator strategies accepted throughout: `id`, `name`, `css`/`cssSelector`, `xpat
 
 Every tool that acts on one element also takes optional `index` (zero-based, which match to use when the locator matches several elements) and `visibleOnly` (ignore hidden matches, applied before `index`). Tools that act on every match (`elementExists`, `countElements`, `getElementsText`, `waitForElementCount`) take `visibleOnly` only.
 
-`click` retries for up to `waitIfCoveredSeconds` (default 5) while another element, such as a loading overlay, intercepts the click.
+`click` retries for up to `waitIfCoveredSeconds` (default 5) while another element, such as a loading overlay, intercepts the click. When the target was covered, the result says so, because the generated test has to wait for it too (see [Wait strategy for generated tests](#wait-strategy-for-generated-tests)).
 
 Errors come back as the driver's one-line message (e.g. `Script error: javascript error: Cannot read properties of undefined (reading 'click')`), without Selenium's build/system/capabilities/session diagnostics.
 
@@ -171,11 +197,11 @@ Errors come back as the driver's one-line message (e.g. `Script error: javascrip
 
 | Tool | Description |
 |---|---|
-| `openBrowser` | Opens a browser window (`chrome`, `firefox`, or `edge`; defaults to `chrome`), with optional `headless`, `incognito`, `windowSize` (e.g. `1920x1080`), and `userAgent`. Reuses an already-open browser, unless a new `session` name is given (see [Running several browsers](#running-several-browsers)). |
+| `openBrowser` | Opens a browser window (`chrome`, `firefox`, or `edge`; defaults to `chrome`), with optional `headless`, `incognito`, `windowSize` (e.g. `1920x1080`), `userAgent`, and the wait strategy (`implicitWaitSeconds`, `networkIdleMillis`, `animationIdleMillis`; see [Wait strategy for generated tests](#wait-strategy-for-generated-tests)). Reuses an already-open browser, unless a new `session` name is given (see [Running several browsers](#running-several-browsers)). |
 | `connectToBrowser` | Connects to a Chrome/Edge that is already running with remote debugging (`--remote-debugging-port=<port>` plus a separate `--user-data-dir`), via `debuggerAddress` (defaults to `127.0.0.1:9222`). Takes an optional `session` name. |
 | `launchDebugBrowser` | Launches Chrome/Edge with remote debugging on `port` (default `9222`) and connects to it. The browser keeps running after `closeBrowser`, so test code can attach to the same browser with `ChromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9222")`. Useful for letting an agent inspect the live page where a test failed. If something is already listening on the port, connects to it instead. Takes an optional `session` name; without a `port`, a second debug browser gets the next free one (`9223`, ...). |
 | `closeBrowser` | Closes the active browser session and releases the driver, or the one named by `session`, or every session with `all`. A browser connected via `connectToBrowser`/`launchDebugBrowser` is only disconnected and keeps running. |
-| `listSessions` | Lists the open browser sessions (name, browser, attached address, current URL) and marks the active one. |
+| `listSessions` | Lists the open browser sessions (name, browser, attached address, current URL, wait strategy) and marks the active one. |
 | `switchSession` | Makes another open session the active one, so all tools act on its browser. |
 | `navigate` | Navigates the open browser to a URL. |
 | `back` / `forward` / `refresh` | Browser history navigation. |
@@ -225,8 +251,11 @@ Example: `locatorType=xpath`, `locatorValue=//input`, `includeAncestors=true` re
 | `waitForElementCount` | Waits until the number of elements matching a locator equals an expected count. |
 | `waitForAttributeToBe` | Waits until an element's attribute/DOM property equals an expected value. |
 | `waitForNumberOfWindowsToBe` | Waits until the number of open windows/tabs equals an expected count. |
+| `setAutoWait` / `getAutoWait` | Sets or shows the session's wait strategy: implicit wait, network idle and animation idle after each action, timeouts, ignored URLs. Answers with the matching Java setup lines. See [Wait strategy for generated tests](#wait-strategy-for-generated-tests). |
+| `getWaitReport` | The steps whose generated code needs a wait, and which one. |
+| `getWaitCodeSnippets` | Usage rules, setup lines and a `Waits` helper class for generated tests that runs the same page checks as the session. |
 
-For waiting on in-flight network requests to settle (e.g. after a click that triggers XHR/fetch calls), see `waitForNetworkIdle` under [Network Tools](#network-capture-mocking--console-logs-networktools--chromeedge-only) below.
+For waiting on in-flight network requests to settle (e.g. after a click that triggers XHR/fetch calls), see `waitForNetworkIdle` under [Network Tools](#network-capture-mocking--console-logs-networktools--chromeedge-only) below. It is more exact than the wait strategy's network wait, because it sees every request through Chrome DevTools, but a generated test can't make the same check. The wait strategy uses an in-page tracker that the test can run as well.
 
 ### Alerts (`AlertTools`)
 
@@ -355,7 +384,8 @@ src/main/java/uk/xpathy/selenium/mcp/
 │   ├── BrowserTools.java          # Sessions, lifecycle, navigation, click/sendKeys
 │   ├── PageSourceTools.java       # Token-efficient JSON views of the page: scripts, styles, element tree, filtered element queries
 │   ├── ElementQueryTools.java     # Read-only element state queries
-│   ├── WaitTools.java             # Explicit waits
+│   ├── WaitTools.java             # Explicit waits, the session wait strategy, wait report and code snippets
+│   ├── AutoWaitMessages.java      # Wait notes, failure hints and the wait report text
 │   ├── AlertTools.java            # JS alert/confirm/prompt dialogs
 │   ├── FrameTools.java            # Frame/iframe switching
 │   ├── WindowTools.java           # Window/tab management
@@ -379,6 +409,10 @@ src/main/java/uk/xpathy/selenium/mcp/
 │   ├── PageSourceInspector.java    # JS-driven scripts/styles/element-tree extraction, backing PageSourceTools
 │   ├── ElementInspector.java       # Read-only element queries
 │   ├── WaitHelper.java             # Explicit waits, incl. page load / JS condition / element count
+│   ├── AutoWaiter.java             # Session wait strategy around every action; records what each one set off
+│   ├── AutoWaitSettings.java       # Implicit wait, network/animation idle times, timeouts, ignored URLs
+│   ├── WaitRecord.java             # What one action set off and waited for
+│   ├── WaitCodeGenerator.java      # The Waits helper and setup lines for generated tests
 │   ├── AlertHandler.java           # Alert/confirm/prompt dialogs
 │   ├── FrameHandler.java           # Frame/iframe switching
 │   ├── WindowManager.java          # Window/tab management

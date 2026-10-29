@@ -6,6 +6,14 @@ Instructions for AI coding agents working in this repository.
 
 A Spring Boot MCP (Model Context Protocol) server that exposes Selenium browser automation to MCP clients over **stdio**. It is not a web app — there is no HTTP server, no REST API, no UI.
 
+**It is a test automation tool for the Selenium + Java ecosystem, not a general-purpose browser automation tool.** Its users are SDETs and QA engineers. An AI assistant uses it to explore an app and then write or maintain Selenium Java tests (with REST Assured-style API checks alongside). Agents that want to get a task done on a website are not the audience. This scope decides how every tool is designed, so keep to it when adding or changing one:
+
+- **Behave like a plain Selenium test, and say so when you don't.** A step that passes here must pass in the generated test. Don't add hidden waits, retries, JavaScript clicks or other workarounds that make the browser succeed where a test would fail. A deliberate exception, such as `click` retrying while covered, must be reported in the result so the agent writes the matching wait. Sessions default to `AutoWaitSettings.NONE` for this reason.
+- **Results should translate into test code.** Use Selenium's locator strategies and `By` descriptions, report the exception a test would get, and say which explicit wait a step needs (`AutoWaitMessages`, `getWaitReport`, `getWaitCodeSnippets`).
+- **Code handed to the agent targets the user's test project, not this server.** That means Java 11+, Selenium 4, explicit waits on conditions, no `Thread.sleep`, and reuse of the project's existing utilities where they exist.
+- **`webdriver/` doubles as a library for hand-written or generated tests**, which is why it carries no MCP/Spring types (see below).
+- **Judge a feature by whether it helps produce a reliable, maintainable Selenium Java test.** Whether it makes the browser task easier is not the test. Write articles and docs for Java/Selenium/REST Assured test automation engineers, not for generic AI-agent browsing.
+
 ## Build & verify
 
 ```bash
@@ -23,13 +31,14 @@ The server can't be smoke-tested by just running the jar and typing at it — it
 ```
 tools/      @McpTool-annotated classes. MCP-facing only: parameter validation,
             "is a browser open" precondition checks, exception → user-readable
-            string translation. No Selenium logic here.
+            string translation. No Selenium logic here. BrowserSessions holds
+            the open browser sessions (one webdriver/Tools each).
 
 webdriver/  Plain-Java Selenium layer. No Spring, no MCP annotations, no
             knowledge that it's being called from an MCP tool. Tools.java is
             the facade/entry point; BrowserFactory, BrowserSession, Locators,
-            Navigator, and ElementInteractor are its collaborators, each with
-            one responsibility.
+            and ~20 single-purpose collaborators (Navigator, ElementInteractor,
+            WaitHelper, NetworkMonitor, PageSourceInspector, ...) sit behind it.
 
 http/       Plain-Java REST client (ApiClient), with no Selenium/Spring/MCP
             dependency and no relationship to the browser session at all.
@@ -47,7 +56,7 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 
 **CDP-backed features are Chrome/Edge only.** `webdriver/NetworkMonitor` (network capture/mocking/blocking/conditions, HTTP Basic auth) and `webdriver/ConsoleLogMonitor` (console log capture) are built on Selenium 4's Chrome DevTools Protocol support (`HasDevTools`/`NetworkInterceptor`/`HasLogEvents`), which Firefox doesn't implement. Their methods throw `UnsupportedOperationException` when the driver doesn't support it; the `tools/NetworkTools` wrappers catch that specifically and return an explanatory string rather than letting it read as a generic failure.
 
-**Browser sessions live in `tools/BrowserSessions`.** It holds one `webdriver/Tools` per named session and tracks the active one; every `@McpTool` acts on `sessions.active()`, so tool signatures carry no session parameter. Only `BrowserTools`' open/connect/launch tools create sessions (via `sessions.open(name, opener)`, which registers nothing if opening throws). `webdriver/` stays single-browser: one `Tools` is one browser.
+**Browser sessions live in `tools/BrowserSessions`.** It holds one `webdriver/Tools` per named session and tracks the active one; every `@McpTool` acts on `sessions.active()`, so tool signatures carry no session parameter. Only `BrowserTools`' open/connect/launch tools create sessions (via `sessions.open(name, opener)`, which registers nothing if opening throws), up to `--selenium.mcp.max-sessions` (default 5); `listSessions`/`switchSession`/`closeBrowser` manage them. Sessions whose browser was closed by hand or crashed are dropped by `pruneDead()`, and every session is closed on shutdown (`@PreDestroy closeAll()`). `webdriver/` stays single-browser: one `Tools` is one browser.
 
 **Attaching over a remote-debugging port is Chrome/Edge only too.** `BrowserFactory.attach`/`launchDebuggable` return an `AttachedDriver` (driver + its `DriverService`). `BrowserSession.close()` disconnects such a session by stopping the service, never by quitting the driver, so a browser the user or a test is also using stays up. Keep that distinction if you touch session teardown.
 
@@ -59,9 +68,12 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 - **Element tools that act on one element** should accept the optional `index`/`visibleOnly` parameters (descriptions in `ElementMatch`) and resolve them with `tools.locator(...)`, which builds a `FilteredBy` — don't hand-roll `findElements().get(n)`.
 - **Prefer raw CDP via `HasCdp.executeCdpCommand`** for one-shot Chrome/Edge commands (see `ScreenshotTaker.captureFullPage`, `InitScriptManager`): it sends plain JSON and keeps working when Chrome outpaces Selenium's bundled `selenium-devtools-vNN` modules, unlike `HasDevTools`/`NetworkInterceptor`/`HasLogEvents`.
 - **`@McpTool` methods return strings** — success and failure both. Catch exceptions in the tool wrapper and return a descriptive message; don't let exceptions propagate out of an `@McpTool` method. The one exception is `ScreenshotTools`, which returns a `CallToolResult` so the screenshot reaches the client as image content; its messages are still text, with failures flagged `isError`. Only return a `CallToolResult` when the result can't be text.
+- **Actions go through `AutoWaiter`.** Every `Tools` method that acts on the page (navigation, clicks, typing, selects, mouse/key actions, uploads, alert answers) runs inside `requireAutoWaiter().run(...)`. That applies the session's `AutoWaitSettings` and records a `WaitRecord` of what the action set off. Give a new action method the same wrapper, and append `AutoWaitMessages.afterAction(tools)` to its `@McpTool` success string and `AutoWaitMessages.failureHint(tools, e)` to its failure string. Read-only queries stay unwrapped.
+- **The server must not wait in ways a generated test can't.** The default strategy is `AutoWaitSettings.NONE`, which is plain Selenium. The waits it does make are judged by `wait-tracker.js` (a page script) and `ClickabilityChecker.STATE_FN`, and `WaitCodeGenerator` embeds both in the `Waits` helper it gives to generated tests. Change the tracker in the `.js` resource only, never in a Java copy, and keep it free of anything the Java 11 helper can't carry. Don't switch auto-waits to CDP network events: the test couldn't make the same check.
 - **Clickable means not covered.** `ClickabilityChecker` (displayed + enabled + nothing on top at the element's centre) is the definition used by `waitForClickable`, `isClickable` and the `getPageElements*` flags. Use it rather than Selenium's `elementToBeClickable`, which passes for a button under a loading overlay.
 - **Precondition checks** ("is a browser open?") belong in the `tools/` wrapper, mirroring the existing pattern (`Tools tools = sessions.active();` then `if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";`). With no session open, `active()` returns a `Tools` with no browser, so the check works unchanged.
 - **Tool methods run inside `synchronized (sessions)`** and read `sessions.active()` inside that block. This serializes every tool call across all sessions and keeps the active session from changing mid-call; keep new stateful tool methods to the same pattern rather than introducing concurrent access to a driver.
+- **Prefix failure messages with `sessions.label()`** (`return sessions.label() + "Failed to add cookie: " + ErrorMessages.of(e);`). It's `[name] ` while more than one session is open and empty otherwise, so errors say which browser they came from.
 - Favor collaborator objects wired through constructors (see `Tools`'s constructor) over static helpers or singletons.
 - Javadoc is used sparingly on package/class-level docs to explain *why* a class exists and how it relates to its neighbors — follow that style rather than commenting individual methods.
 
@@ -76,6 +88,10 @@ Don't put Selenium calls directly in the `tools/` layer, and don't put MCP/Sprin
 `npm/` packages the server for `npx -y @xpathy/selenium-mcp`, with no Java install needed: CI (`.github/workflows/ci.yml`, `bundle` and `publish-npm` jobs) jlinks a trimmed Java runtime per OS/CPU, packs it with the jar into `@xpathy/selenium-mcp-<platform>-<arch>`, and `npm/selenium-mcp/bin/selenium-mcp.js` launches the jar on whichever one npm installed. The same stdout rule applies to the launcher: it must never write to stdout (except for the terminal-only `--version`). On Windows the launcher spawns the JVM `detached` and pipes stdin to it rather than inheriting it: Node otherwise kills the JVM outright together with the launcher, skipping the shutdown that closes browsers. Keep that if you touch the spawn. The jlink module list is `JLINK_MODULES` in `ci.yml`; if a dependency starts needing another JDK module, the bundle job's smoke tests (`npm/scripts/smoke-test.js`) fail and the module goes there.
 
 `publish-npm` authenticates with npm trusted publishing (GitHub OIDC), so every `@xpathy` package must list `ci.yml` as its trusted publisher on npmjs.com — a new platform package needs a token-based first publish before that can be configured. It waits until the registry serves each platform version before publishing the launcher; keep that ordering. If a user's npx cache still ends up without the platform package, the launcher installs it into that cache itself (`repairNpxInstall`).
+
+## Versioning
+
+The version has one source: `<revision>` in `pom.xml` (e.g. `1.0-SNAPSHOT`). CI's `build` job turns it into the release version `<revision without -SNAPSHOT>.<run number>` and builds with `-Drevision=<that>`, so the jar, the version the server reports to MCP clients (`spring.ai.mcp.server.version=@project.version@`, filtered at build time), the GitHub release tag and the npm packages all carry the same number. Don't hard-code a version anywhere else; `npm/selenium-mcp/package.json` stays at `0.0.0` and is stamped by `npm/scripts/set-version.js` at publish time.
 
 ## Adding dependencies
 

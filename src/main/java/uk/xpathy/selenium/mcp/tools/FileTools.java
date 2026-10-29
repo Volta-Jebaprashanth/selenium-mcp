@@ -34,9 +34,9 @@ public class FileTools {
             if (!tools.isBrowserOpen()) return "No browser is open. Call openBrowser first.";
             try {
                 tools.uploadFile(tools.locator(locatorType, locatorValue, index, Boolean.TRUE.equals(visibleOnly)), absoluteFilePath);
-                return "Uploaded file " + absoluteFilePath;
+                return "Uploaded file " + absoluteFilePath + AutoWaitMessages.afterAction(tools);
             } catch (Exception e) {
-                return sessions.label() + "Failed to upload file: " + ErrorMessages.of(e);
+                return sessions.label() + "Failed to upload file: " + ErrorMessages.of(e) + AutoWaitMessages.failureHint(tools, e);
             }
         }
     }

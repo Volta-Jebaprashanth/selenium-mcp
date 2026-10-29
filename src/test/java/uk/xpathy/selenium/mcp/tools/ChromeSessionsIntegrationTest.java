@@ -84,6 +84,7 @@ class ChromeSessionsIntegrationTest {
     }
 
     private String openHeadless(String session) {
-        return browser.openBrowser("chrome", true, null, null, null, session);
+        return BrowserSessionsTest.withoutWaitStrategy(
+                browser.openBrowser("chrome", true, null, null, null, null, null, null, session));
     }
 }
