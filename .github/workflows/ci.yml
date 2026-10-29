@@ -65,7 +65,7 @@ jobs:
           if-no-files-found: error
 
   # Builds a trimmed Java runtime per OS/CPU and packs it with the jar into the
-  # @xpathy/selenium-mcp-<platform>-<arch> npm package. Runs on pull requests too, so a
+  # @voltajeba/selenium-mcp-<platform>-<arch> npm package. Runs on pull requests too, so a
   # change that breaks the bundled runtime is caught before it reaches main.
   bundle:
     needs: build
@@ -131,12 +131,16 @@ jobs:
         run: |
           # Lay the packages out the way npm installs them, then start the server through
           # the launcher - this exercises the packed files, not the build directory.
-          mkdir -p launcher-test/node_modules/@xpathy
-          cp -r npm/selenium-mcp "launcher-test/node_modules/@xpathy/selenium-mcp"
+          mkdir -p launcher-test/node_modules/@voltajeba
+          cp -r npm/selenium-mcp "launcher-test/node_modules/@voltajeba/selenium-mcp"
           tar -xzf tarballs/*.tgz -C launcher-test
-          mv launcher-test/package "launcher-test/node_modules/@xpathy/selenium-mcp-${{ matrix.target }}"
+          mv launcher-test/package "launcher-test/node_modules/@voltajeba/selenium-mcp-${{ matrix.target }}"
+          node launcher-test/node_modules/@voltajeba/selenium-mcp/bin/selenium-mcp.js --version
+          node npm/scripts/smoke-test.js node launcher-test/node_modules/@voltajeba/selenium-mcp/bin/selenium-mcp.js
+          # The @xpathy/selenium-mcp alias must still reach the launcher.
+          mkdir -p launcher-test/node_modules/@xpathy
+          cp -r npm/xpathy-selenium-mcp "launcher-test/node_modules/@xpathy/selenium-mcp"
           node launcher-test/node_modules/@xpathy/selenium-mcp/bin/selenium-mcp.js --version
-          node npm/scripts/smoke-test.js node launcher-test/node_modules/@xpathy/selenium-mcp/bin/selenium-mcp.js
 
       - name: Upload npm package
         uses: actions/upload-artifact@v7
@@ -173,9 +177,9 @@ jobs:
   # registry actually serves each platform version before publishing the launcher: npm
   # processes large uploads asynchronously (the first publish took ~10 minutes), and an
   # `npx` that resolves the launcher before its runtime is servable caches an install
-  # without one. The @voltajeba/selenium-mcp alias, which depends on the launcher, goes out
-  # once the launcher is served, for the same reason. Already-published versions are skipped,
-  # so a failed run can be re-run.
+  # without one. The @xpathy/selenium-mcp alias (the package's former name) depends on the
+  # launcher, so it goes out once the launcher is served, for the same reason.
+  # Already-published versions are skipped, so a failed run can be re-run.
   #
   # Authenticates with npm trusted publishing (GitHub OIDC; needs npm >= 11.5.1 and the
   # id-token permission). The NPM_TOKEN secret is only a fallback until trusted publishing
@@ -270,7 +274,7 @@ jobs:
           done
 
           node npm/scripts/set-version.js "$VERSION"
-          publish "@xpathy/selenium-mcp" ./npm/selenium-mcp
+          publish "@voltajeba/selenium-mcp" ./npm/selenium-mcp
 
-          wait_until_live "@xpathy/selenium-mcp" "@voltajeba/selenium-mcp"
-          publish "@voltajeba/selenium-mcp" ./npm/voltajeba-selenium-mcp
+          wait_until_live "@voltajeba/selenium-mcp" "@xpathy/selenium-mcp"
+          publish "@xpathy/selenium-mcp" ./npm/xpathy-selenium-mcp

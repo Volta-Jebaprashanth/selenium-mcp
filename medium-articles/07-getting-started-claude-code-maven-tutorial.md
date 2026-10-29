@@ -12,7 +12,7 @@ Nothing exotic:
 - Chrome, Firefox, or Edge installed locally — WebDriver binaries are fetched automatically on first use, no manual driver management
 - An MCP-capable client: Claude Code, Claude Desktop, Cursor, VS Code, etc.
 
-That's the whole list. Notice what's *not* on it: Java. The server is written in Java, but it's published to npm as `@xpathy/selenium-mcp` with its own trimmed Java 21 runtime bundled, so you don't need a JDK installed or `JAVA_HOME` set just to run it. And there's no separate browser runtime either — the server drives the actual browser you already have.
+That's the whole list. Notice what's *not* on it: Java. The server is written in Java, but it's published to npm as `@voltajeba/selenium-mcp` with its own trimmed Java 21 runtime bundled, so you don't need a JDK installed or `JAVA_HOME` set just to run it. And there's no separate browser runtime either — the server drives the actual browser you already have.
 
 ## Step 1 — Add it to your MCP client
 
@@ -23,7 +23,7 @@ The server talks over stdio, so it's launched by your MCP client rather than run
   "mcpServers": {
     "selenium-mcp": {
       "command": "npx",
-      "args": ["-y", "@xpathy/selenium-mcp"]
+      "args": ["-y", "@voltajeba/selenium-mcp"]
     }
   }
 }
@@ -31,18 +31,18 @@ The server talks over stdio, so it's launched by your MCP client rather than run
 
 A few variations, depending on where you're running it:
 
-- **Claude Code from a terminal**, if you'd rather not edit JSON: `claude mcp add selenium-mcp -- npx -y @xpathy/selenium-mcp`
-- **Claude Code on native Windows** needs `npx` wrapped in `cmd /c`: `"command": "cmd", "args": ["/c", "npx", "-y", "@xpathy/selenium-mcp"]`
+- **Claude Code from a terminal**, if you'd rather not edit JSON: `claude mcp add selenium-mcp -- npx -y @voltajeba/selenium-mcp`
+- **Claude Code on native Windows** needs `npx` wrapped in `cmd /c`: `"command": "cmd", "args": ["/c", "npx", "-y", "@voltajeba/selenium-mcp"]`
 - **VS Code** (`.vscode/mcp.json`) uses `servers` as the top-level key instead of `mcpServers`; the inner `command`/`args` are the same.
 
 Restart your client, and you should see `selenium-mcp` show up as an available tool provider, with all 116 tools across 16 categories ready to call.
 
-**The first start is the slow one.** npm installs only the platform package matching your machine (Windows x64, Linux x64, macOS Intel, or macOS Apple Silicon), but that's still around 90 MB — the Java runtime plus the server. If your client gives up waiting on that first launch, just restart the server once, or pre-download it from a terminal beforehand with `npx -y @xpathy/selenium-mcp --version`. Every start after that is local. Logs go to `~/.selenium-mcp/mcp-server.log` if you need to see what happened.
+**The first start is the slow one.** npm installs only the platform package matching your machine (Windows x64, Linux x64, macOS Intel, or macOS Apple Silicon), but that's still around 90 MB — the Java runtime plus the server. If your client gives up waiting on that first launch, just restart the server once, or pre-download it from a terminal beforehand with `npx -y @voltajeba/selenium-mcp --version`. Every start after that is local. Logs go to `~/.selenium-mcp/mcp-server.log` if you need to see what happened.
 
 **Optional: load fewer tools.** Every tool's schema costs your agent context tokens before it's done anything. Anything you append to `args` is passed through to the server, so if you're only interested in the browser and element discovery for now, you can switch off whole tool groups:
 
 ```json
-"args": ["-y", "@xpathy/selenium-mcp", "--selenium.mcp.exclude-tool-groups=api,network,cookies,alerts,select,files"]
+"args": ["-y", "@voltajeba/selenium-mcp", "--selenium.mcp.exclude-tool-groups=api,network,cookies,alerts,select,files"]
 ```
 
 That takes it from 116 tools down to 75. Core browser tools (open, navigate, click, type) are always on.

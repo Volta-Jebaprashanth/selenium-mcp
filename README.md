@@ -39,8 +39,8 @@ It also exposes Selenium 4's Chrome DevTools Protocol (CDP) capabilities — pas
 
 Paste this into your MCP client's config. The npm package bundles its own Java runtime, so all you need is [Node.js](https://nodejs.org) (for `npx`) and a browser.
 
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_selenium--mcp-0098FF?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=selenium-mcp&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40xpathy%2Fselenium-mcp%22%5D%7D)
-[![Add to Cursor](https://img.shields.io/badge/Cursor-Add_selenium--mcp-000000?logo=cursor&logoColor=white)](https://cursor.com/en/install-mcp?name=selenium-mcp&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkB4cGF0aHkvc2VsZW5pdW0tbWNwIl19)
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_selenium--mcp-0098FF?logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=selenium-mcp&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40voltajeba%2Fselenium-mcp%22%5D%7D)
+[![Add to Cursor](https://img.shields.io/badge/Cursor-Add_selenium--mcp-000000?logo=cursor&logoColor=white)](https://cursor.com/en/install-mcp?name=selenium-mcp&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkB2b2x0YWplYmEvc2VsZW5pdW0tbWNwIl19)
 
 **Claude Code** (`.mcp.json`), **Cursor**, **Claude Desktop** — macOS / Linux:
 
@@ -49,7 +49,7 @@ Paste this into your MCP client's config. The npm package bundles its own Java r
   "mcpServers": {
     "selenium-mcp": {
       "command": "npx",
-      "args": ["-y", "@xpathy/selenium-mcp"]
+      "args": ["-y", "@voltajeba/selenium-mcp"]
     }
   }
 }
@@ -62,7 +62,7 @@ Windows (Claude Code needs `npx` wrapped in `cmd /c` there):
   "mcpServers": {
     "selenium-mcp": {
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "@xpathy/selenium-mcp"]
+      "args": ["/c", "npx", "-y", "@voltajeba/selenium-mcp"]
     }
   }
 }
@@ -75,15 +75,17 @@ Windows (Claude Code needs `npx` wrapped in `cmd /c` there):
   "servers": {
     "selenium-mcp": {
       "command": "npx",
-      "args": ["-y", "@xpathy/selenium-mcp"]
+      "args": ["-y", "@voltajeba/selenium-mcp"]
     }
   }
 }
 ```
 
-Or, for Claude Code, from a terminal: `claude mcp add selenium-mcp -- npx -y @xpathy/selenium-mcp`
+Or, for Claude Code, from a terminal: `claude mcp add selenium-mcp -- npx -y @voltajeba/selenium-mcp`
 
-The first start downloads about 90 MB (the Java runtime for your OS plus the server). If your client times out on that first start, restart the server once — or pre-download it with `npx -y @xpathy/selenium-mcp --version`. Supported platforms: Windows x64, Linux x64 (glibc), macOS Intel, macOS Apple Silicon. Logs go to `~/.selenium-mcp/mcp-server.log`. Any extra arguments (e.g. [`--selenium.mcp.exclude-tool-groups=...`](#loading-fewer-tools)) are passed through to the server.
+The first start downloads about 90 MB (the Java runtime for your OS plus the server). If your client times out on that first start, restart the server once — or pre-download it with `npx -y @voltajeba/selenium-mcp --version`. Supported platforms: Windows x64, Linux x64 (glibc), macOS Intel, macOS Apple Silicon. Logs go to `~/.selenium-mcp/mcp-server.log`. Any extra arguments (e.g. [`--selenium.mcp.exclude-tool-groups=...`](#loading-fewer-tools)) are passed through to the server.
+
+`@voltajeba/selenium-mcp` was previously published as `@xpathy/selenium-mcp`. That name still works and is released alongside it, so existing configs need no change.
 
 Prefer running the jar on your own Java? Read on.
 
@@ -377,7 +379,7 @@ Headers are passed as a JSON object string, e.g. `{"Authorization": "Bearer xyz"
 ## Project structure
 
 ```
-src/main/java/uk/xpathy/selenium/mcp/
+src/main/java/com/voltajeba/selenium/mcp/
 ├── McpServerApplication.java     # Spring Boot entry point
 ├── tools/                        # @McpTool-annotated classes — the MCP-facing surface
 │   ├── BrowserSessions.java       # Named browser sessions and which one is active
@@ -445,7 +447,7 @@ Logs go to `mcp-server.log` (rotated), not the console — console output is res
 
 ## npm distribution
 
-The [`npm/`](npm/) directory holds the `@xpathy/selenium-mcp` package behind the [Quick start](#quick-start-no-java-install-needed). On every push to `main`, CI builds a trimmed Java 21 runtime with `jlink` on Windows x64, Linux x64, macOS Intel and macOS Apple Silicon, packs each with the jar into a platform package (`@xpathy/selenium-mcp-<platform>-<arch>`), smoke-tests it over MCP stdio, and publishes it to npm via trusted publishing (with provenance), waiting until the registry serves each platform package before publishing the launcher. The `@xpathy/selenium-mcp` launcher lists the platform packages as `optionalDependencies`, so npm installs only the one matching the user's machine, and starts the jar on that runtime. The same server is also published as `@voltajeba/selenium-mcp` (`npx -y @voltajeba/selenium-mcp`), a thin alias that depends on `@xpathy/selenium-mcp` of the same version and runs its launcher; CI publishes it once the launcher is served.
+The [`npm/`](npm/) directory holds the `@voltajeba/selenium-mcp` package behind the [Quick start](#quick-start-no-java-install-needed). On every push to `main`, CI builds a trimmed Java 21 runtime with `jlink` on Windows x64, Linux x64, macOS Intel and macOS Apple Silicon, packs each with the jar into a platform package (`@voltajeba/selenium-mcp-<platform>-<arch>`), smoke-tests it over MCP stdio, and publishes it to npm via trusted publishing (with provenance), waiting until the registry serves each platform package before publishing the launcher. The `@voltajeba/selenium-mcp` launcher lists the platform packages as `optionalDependencies`, so npm installs only the one matching the user's machine, and starts the jar on that runtime. The package's former name, `@xpathy/selenium-mcp`, is still published with every release as a thin alias that depends on `@voltajeba/selenium-mcp` of the same version and runs its launcher; CI publishes it once the launcher is served.
 
 ## For AI coding agents
 

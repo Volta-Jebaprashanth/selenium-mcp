@@ -1,5 +1,5 @@
 {
-  "name": "@xpathy/selenium-mcp",
+  "name": "@voltajeba/selenium-mcp",
   "version": "0.0.0",
   "description": "Selenium MCP server for Java/Selenium test automation engineers, with a Java runtime bundled - no JDK install needed.",
   "keywords": [
@@ -25,10 +25,10 @@
     "node": ">=18"
   },
   "optionalDependencies": {
-    "@xpathy/selenium-mcp-win32-x64": "0.0.0",
-    "@xpathy/selenium-mcp-linux-x64": "0.0.0",
-    "@xpathy/selenium-mcp-darwin-x64": "0.0.0",
-    "@xpathy/selenium-mcp-darwin-arm64": "0.0.0"
+    "@voltajeba/selenium-mcp-win32-x64": "0.0.0",
+    "@voltajeba/selenium-mcp-linux-x64": "0.0.0",
+    "@voltajeba/selenium-mcp-darwin-x64": "0.0.0",
+    "@voltajeba/selenium-mcp-darwin-arm64": "0.0.0"
   },
   "mcpName": "io.github.volta-jebaprashanth/selenium-mcp"
 }

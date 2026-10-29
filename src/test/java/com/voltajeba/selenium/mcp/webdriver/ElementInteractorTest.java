@@ -1,0 +1,82 @@
+package com.voltajeba.selenium.mcp.webdriver;
+
+import org.junit.jupiter.api.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.ElementClickInterceptedException;
+import org.openqa.selenium.ElementNotInteractableException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+
+import java.time.Duration;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+class ElementInteractorTest {
+
+    private final WebDriver driver = mock(WebDriver.class);
+    private final WebElement button = mock(WebElement.class);
+    private final ClickabilityChecker clickability = mock(ClickabilityChecker.class);
+    private final ElementInteractor interactor = new ElementInteractor(driver, new Locators(), clickability);
+    private final By locator = By.id("save");
+
+    ElementInteractorTest() {
+        when(driver.findElement(locator)).thenReturn(button);
+        when(clickability.check(locator)).thenReturn(new ClickabilityChecker.Clickability(true, true, true, null));
+    }
+
+    @Test
+    void anInterceptedClickIsRetriedUntilTheCoverGoes() {
+        doThrow(new ElementClickInterceptedException("covered"))
+                .doThrow(new ElementClickInterceptedException("covered"))
+                .doNothing()
+                .when(button).click();
+
+        ElementInteractor.Covered covered = interactor.click(locator, Duration.ofSeconds(5));
+
+        verify(button, times(3)).click();
+        assertEquals("another element", covered.by());
+    }
+
+    @Test
+    void anElementCoveredWhenTheClickStartsIsReportedEvenIfTheDriverWaitsItOut() {
+        when(clickability.check(locator)).thenReturn(new ClickabilityChecker.Clickability(true, true, false, "div.loader"));
+        doNothing().when(button).click();
+
+        ElementInteractor.Covered covered = interactor.click(locator, Duration.ofSeconds(5));
+
+        assertEquals("div.loader", covered.by());
+        verify(button, times(1)).click();
+    }
+
+    @Test
+    void withNoWaitAnInterceptedClickFailsAtOnce() {
+        doThrow(new ElementClickInterceptedException("covered")).when(button).click();
+
+        assertThrows(ElementClickInterceptedException.class, () -> interactor.click(locator, Duration.ZERO));
+        verify(button, times(1)).click();
+    }
+
+    @Test
+    void otherClickFailuresAreNotRetried() {
+        doThrow(new ElementNotInteractableException("hidden")).when(button).click();
+
+        assertThrows(ElementNotInteractableException.class, () -> interactor.click(locator, Duration.ofSeconds(5)));
+        verify(button, times(1)).click();
+    }
+
+    @Test
+    void aClickThatWorksIsMadeOnce() {
+        doNothing().when(button).click();
+
+        assertEquals(ElementInteractor.Covered.NONE, interactor.click(locator, Duration.ofSeconds(5)));
+
+        verify(button, times(1)).click();
+    }
+}

@@ -24,7 +24,7 @@ mvn clean package
 
 The server speaks the MCP stdio protocol — it isn't a REPL you can run and type at. To verify a change end-to-end, either:
 
-- write a unit/integration test against `uk.xpathy.selenium.mcp.webdriver.Tools` directly (it has no Spring/MCP dependency and can be instantiated plainly), or
+- write a unit/integration test against `com.voltajeba.selenium.mcp.webdriver.Tools` directly (it has no Spring/MCP dependency and can be instantiated plainly), or
 - wire the built jar into an actual MCP client (Claude Desktop, Claude Code, Cursor, etc.) and exercise the tool by hand.
 
 ## Before you start coding

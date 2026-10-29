@@ -10,7 +10,7 @@
     <version>4.1.2</version>
 </parent>
 
-<groupId>uk.xpathy.selenium.mcp</groupId>
+<groupId>com.voltajeba.selenium.mcp</groupId>
 <artifactId>selenium-mcp</artifactId>
 <version>${revision}</version>
 <name>selenium-mcp</name>

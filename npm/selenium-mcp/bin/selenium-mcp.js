@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Launches the selenium-mcp jar on the Java runtime bundled in the matching
-// @xpathy/selenium-mcp-<platform>-<arch> package. stdout carries the MCP protocol,
+// @voltajeba/selenium-mcp-<platform>-<arch> package. stdout carries the MCP protocol,
 // so this script must never write to it - diagnostics go to stderr only.
 'use strict';
 
@@ -12,7 +12,7 @@ const path = require('path');
 const { version } = require('../package.json');
 const SUPPORTED = ['win32-x64', 'linux-x64', 'darwin-x64', 'darwin-arm64'];
 const target = `${process.platform}-${process.arch}`;
-const platformPackage = `@xpathy/selenium-mcp-${target}`;
+const platformPackage = `@voltajeba/selenium-mcp-${target}`;
 
 function resolvePlatformPackage() {
   try {
@@ -53,7 +53,7 @@ if (!packageDir) {
       ? `selenium-mcp: ${platformPackage}@${version} is not installed, and installing it failed.\n` +
           (path.basename(path.dirname(npxInstallDir)) === '_npx'
             ? `Delete ${npxInstallDir} and restart the server so npx reinstalls it.\n`
-            : `Reinstall @xpathy/selenium-mcp without --omit=optional / --no-optional.\n`)
+            : `Reinstall @voltajeba/selenium-mcp without --omit=optional / --no-optional.\n`)
       : `selenium-mcp: no bundled Java runtime for ${target}. Supported: ${SUPPORTED.join(', ')}.\n` +
           'On other platforms, install Java 21+ and run the jar from ' +
           'https://github.com/Volta-Jebaprashanth/selenium-mcp/releases/latest\n'
@@ -81,8 +81,8 @@ const args = process.argv.slice(2);
 
 if (args[0] === '--version') {
   // Terminal-only convenience (an MCP client never passes it): lets users pre-download
-  // the package with `npx -y @xpathy/selenium-mcp --version` before the first real start.
-  process.stdout.write(`@xpathy/selenium-mcp ${version} (${platformPackage})\n`);
+  // the package with `npx -y @voltajeba/selenium-mcp --version` before the first real start.
+  process.stdout.write(`@voltajeba/selenium-mcp ${version} (${platformPackage})\n`);
   process.exit(0);
 }
 

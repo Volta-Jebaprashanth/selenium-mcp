@@ -50,7 +50,7 @@ That's the whole change. Without the property, nothing is different: CI and ever
 
 ## Then I just ask the agent to debug it
 
-With selenium-mcp added to Claude Code (`npx -y @xpathy/selenium-mcp`, [setup walkthrough here](07-getting-started-claude-code-maven-tutorial.md)), my prompt is roughly this:
+With selenium-mcp added to Claude Code (`npx -y @voltajeba/selenium-mcp`, [setup walkthrough here](07-getting-started-claude-code-maven-tutorial.md)), my prompt is roughly this:
 
 > "`CheckoutTest.placeOrder` is failing. Launch a debug Chrome, run the test against it with `-Ddebugger.address=127.0.0.1:9222`, and when it fails, take over the browser, find out why, fix the test, and finish the rest of the flow to check it."
 

@@ -1,0 +1,30 @@
+{
+  "name": "@xpathy/selenium-mcp",
+  "version": "0.0.0",
+  "description": "Selenium MCP server for Java/Selenium test automation engineers, with a Java runtime bundled - no JDK install needed. Former name of @voltajeba/selenium-mcp - installs and runs it.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "selenium",
+    "webdriver",
+    "test-automation"
+  ],
+  "homepage": "https://selenium-mcp.xpathy.uk/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Volta-Jebaprashanth/selenium-mcp.git"
+  },
+  "license": "MIT",
+  "bin": {
+    "selenium-mcp": "bin/selenium-mcp.js"
+  },
+  "files": [
+    "bin/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@voltajeba/selenium-mcp": "0.0.0"
+  }
+}

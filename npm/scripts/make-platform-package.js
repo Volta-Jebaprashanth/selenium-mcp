@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Turns a jlink'd runtime + the server jar into the @xpathy/selenium-mcp-<platform>-<arch>
+// Turns a jlink'd runtime + the server jar into the @voltajeba/selenium-mcp-<platform>-<arch>
 // npm package directory. Run by CI on each target OS, after jlink.
 //
 // Usage: node make-platform-package.js <version> <outDir>
@@ -24,11 +24,11 @@ for (const required of ['runtime', 'selenium-mcp.jar']) {
   }
 }
 
-const name = `@xpathy/selenium-mcp-${process.platform}-${process.arch}`;
+const name = `@voltajeba/selenium-mcp-${process.platform}-${process.arch}`;
 const pkg = {
   name,
   version,
-  description: `Java runtime and server jar for @xpathy/selenium-mcp on ${process.platform}-${process.arch}. Install @xpathy/selenium-mcp instead of this package.`,
+  description: `Java runtime and server jar for @voltajeba/selenium-mcp on ${process.platform}-${process.arch}. Install @voltajeba/selenium-mcp instead of this package.`,
   homepage: 'https://selenium-mcp.xpathy.uk/',
   repository: {
     type: 'git',
@@ -45,9 +45,9 @@ const pkg = {
 fs.writeFileSync(path.join(outDir, 'package.json'), JSON.stringify(pkg, null, 2) + '\n');
 fs.writeFileSync(
   path.join(outDir, 'README.md'),
-  `# ${name}\n\nPlatform-specific part of [@xpathy/selenium-mcp](https://www.npmjs.com/package/@xpathy/selenium-mcp): ` +
+  `# ${name}\n\nPlatform-specific part of [@voltajeba/selenium-mcp](https://www.npmjs.com/package/@voltajeba/selenium-mcp): ` +
     'a trimmed OpenJDK runtime (built with jlink) plus the selenium-mcp server jar.\n\n' +
-    'Don\'t install this directly - use `npx -y @xpathy/selenium-mcp`, which picks the right platform package automatically.\n\n' +
+    'Don\'t install this directly - use `npx -y @voltajeba/selenium-mcp`, which picks the right platform package automatically.\n\n' +
     'OpenJDK is licensed under GPLv2 with the Classpath Exception; its notices are in `runtime/legal/`.\n'
 );
 console.log(`Wrote ${name}@${version} to ${outDir}`);
